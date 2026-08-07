@@ -2,6 +2,7 @@ using System.Windows;
 using Microsoft.Win32;
 using WinAcmeGui.App.Features;
 using WinAcmeGui.App.Localization;
+using WinAcmeGui.Infrastructure.Downloads;
 
 namespace WinAcmeGui.App.Shell;
 
@@ -48,9 +49,33 @@ public partial class MainWindow : Window
         ((MainWindowViewModel)DataContext).RefreshLabels();
     }
 
-    private void DownloadClick(object sender, RoutedEventArgs e)
+    private async void DownloadClick(object sender, RoutedEventArgs e)
     {
-        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("https://www.win-acme.com/") { UseShellExecute = true });
+        try
+        {
+            var verifier = new PackageVerifier(["api.github.com", "github.com"]);
+            var catalog = new OfficialReleaseCatalog(new HttpClient(), verifier);
+            var asset = await catalog.GetLatestAsync(CancellationToken.None);
+            var destination = Path.Combine(AppContext.BaseDirectory, "win-acme-downloads", asset.Version);
+            try
+            {
+                Directory.CreateDirectory(destination);
+                var probe = Path.Combine(destination, ".write-test");
+                await File.WriteAllTextAsync(probe, string.Empty);
+                File.Delete(probe);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                destination = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "WinAcmeGui", "win-acme-downloads", asset.Version);
+            }
+            var downloader = new WinAcmeDownloader(new OfficialReleaseClient(new HttpClient(), verifier), new SafeZipExtractor());
+            await downloader.DownloadAndExtractAsync(asset, destination, null, CancellationToken.None);
+            MessageBox.Show($"win-acme {asset.Version} instalado em:\n{destination}\n\nUse Atualizar para detectá-lo.", "win-acme GUI", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(ex.Message, "Download do win-acme", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     private async void SelectExecutableClick(object sender, RoutedEventArgs e)
