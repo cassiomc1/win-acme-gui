@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <AssemblyName>WinAcmeGui</AssemblyName>
+    <RootNamespace>WinAcmeGui.App</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('windows'))">
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+  <PropertyGroup Condition="!$([MSBuild]::IsOSPlatform('windows'))">
+    <TargetFramework>net8.0</TargetFramework>
+    <OutputType>Library</OutputType>
+    <EnableDefaultApplicationDefinition>false</EnableDefaultApplicationDefinition>
+    <EnableDefaultPageItems>false</EnableDefaultPageItems>
+  </PropertyGroup>
+  <ItemGroup Condition="!$([MSBuild]::IsOSPlatform('windows'))">
+    <Compile Remove="App.xaml.cs" />
+    <Compile Remove="Shell/MainWindow.xaml.cs" />
+    <Compile Remove="Shell/MainWindowViewModel.cs" />
+    <Compile Remove="Features/NewCertificateWindow.xaml.cs" />
+    <None Include="App.xaml" />
+    <None Include="Shell/MainWindow.xaml" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../WinAcmeGui.Domain/WinAcmeGui.Domain.csproj" />
+    <ProjectReference Include="../WinAcmeGui.Application/WinAcmeGui.Application.csproj" />
+    <ProjectReference Include="../WinAcmeGui.Infrastructure/WinAcmeGui.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

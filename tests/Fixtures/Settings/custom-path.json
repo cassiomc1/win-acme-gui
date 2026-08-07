@@ -1,0 +1,4 @@
+{
+  "Client": { "ClientName": "custom-client", "ConfigurationPath": "D:\\AcmeConfig" },
+  "ACME": { "DefaultBaseUri": "https://acme-staging-v02.api.letsencrypt.org/" }
+}

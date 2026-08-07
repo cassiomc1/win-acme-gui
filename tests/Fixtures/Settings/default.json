@@ -1,0 +1,6 @@
+{
+  "Client": { "ClientName": "win-acme", "ConfigurationPath": null },
+  "ACME": { "DefaultBaseUri": "https://acme-v02.api.letsencrypt.org/" },
+  "UI": { "PageSize": 50 },
+  "FutureOption": { "Enabled": true }
+}

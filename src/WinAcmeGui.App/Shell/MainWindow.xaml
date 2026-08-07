@@ -1,0 +1,92 @@
+<Window x:Class="WinAcmeGui.App.Shell.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="win-acme GUI" Width="1280" Height="820" MinWidth="980" MinHeight="640"
+        Background="{DynamicResource WindowBackground}" WindowStartupLocation="CenterScreen">
+  <Grid>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="236" />
+      <ColumnDefinition Width="*" />
+    </Grid.ColumnDefinitions>
+
+    <Border Grid.Column="0" Background="{DynamicResource SidebarBackground}">
+      <DockPanel LastChildFill="True">
+        <StackPanel DockPanel.Dock="Top" Margin="24,26,20,26">
+          <TextBlock Text="win-acme" Foreground="White" FontSize="22" FontWeight="SemiBold" />
+          <TextBlock Text="GUI ADMIN CENTER" Foreground="#8FA9BF" FontSize="10" FontWeight="SemiBold" Margin="1,5,0,0" />
+        </StackPanel>
+        <StackPanel x:Name="NavigationPanel" />
+        <StackPanel DockPanel.Dock="Bottom" Margin="20,0,20,22">
+          <Border Background="#203B56" CornerRadius="8" Padding="12">
+            <StackPanel>
+              <TextBlock Text="STATUS" Foreground="#8FA9BF" FontSize="10" FontWeight="SemiBold" />
+              <TextBlock Text="{Binding Status}" Foreground="White" TextWrapping="Wrap" Margin="0,6,0,0" FontSize="11" />
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </DockPanel>
+    </Border>
+
+    <Grid Grid.Column="1" Margin="34,28,34,28">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="*" />
+      </Grid.RowDefinitions>
+
+      <Grid Grid.Row="0" Margin="0,0,0,24">
+        <StackPanel>
+          <TextBlock Text="{Binding PageTitle}" FontSize="29" FontWeight="SemiBold" Foreground="#172B4D" />
+          <TextBlock Text="{Binding ActiveVersion, StringFormat=win-acme {0}}" Foreground="{DynamicResource MutedBrush}" Margin="0,5,0,0" />
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+          <Button Content="EN" Click="EnglishClick" AutomationProperties.Name="Switch to English" />
+          <Button Content="PT" Click="PortugueseClick" AutomationProperties.Name="Mudar para português" />
+          <Button Content="Baixar win-acme" Click="DownloadClick" AutomationProperties.Name="Baixar win-acme oficial" />
+          <Button Content="↻  Atualizar" Click="RefreshClick" AutomationProperties.Name="Atualizar inventário" />
+        </StackPanel>
+      </Grid>
+
+      <Border Grid.Row="1" Background="White" BorderBrush="#DCE4EC" BorderThickness="1" CornerRadius="10" Padding="18" Margin="0,0,0,20">
+        <Grid>
+          <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+          <StackPanel Grid.Column="0"><TextBlock Text="INSTALAÇÃO ATIVA" FontSize="10" Foreground="{DynamicResource MutedBrush}" FontWeight="SemiBold" /><TextBlock Text="{Binding ActiveCandidate.ExecutablePath, TargetNullValue=—}" Foreground="#243B53" Margin="0,5,16,0" TextTrimming="CharacterEllipsis" /></StackPanel>
+          <StackPanel Grid.Column="1"><TextBlock Text="CONFIGURAÇÃO" FontSize="10" Foreground="{DynamicResource MutedBrush}" FontWeight="SemiBold" /><TextBlock Text="{Binding ActiveConfigurationPath}" Foreground="#243B53" Margin="0,5,16,0" TextTrimming="CharacterEllipsis" /></StackPanel>
+          <StackPanel Grid.Column="2"><TextBlock Text="ENDPOINT ACME" FontSize="10" Foreground="{DynamicResource MutedBrush}" FontWeight="SemiBold" /><TextBlock Text="{Binding ActiveEndpoint}" Foreground="#243B53" Margin="0,5,16,0" /></StackPanel>
+          <Button Grid.Column="3" Content="Selecionar wacs.exe" Click="SelectExecutableClick" VerticalAlignment="Center" />
+        </Grid>
+      </Border>
+
+      <Grid Grid.Row="2">
+        <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+        <UniformGrid Grid.Row="0" Columns="3" Margin="0,0,0,18">
+          <Border Background="#E8F2F4" CornerRadius="9" Padding="18" Margin="0,0,10,0"><StackPanel><TextBlock Text="RENOVAÇÕES" FontSize="10" Foreground="#47717D" FontWeight="SemiBold" /><TextBlock Text="{Binding RenewalSummary}" FontSize="22" FontWeight="SemiBold" Foreground="#1D5C69" Margin="0,8,0,0" /></StackPanel></Border>
+          <Border Background="#EEF6EE" CornerRadius="9" Padding="18" Margin="0,0,10,0"><StackPanel><TextBlock Text="SAÚDE" FontSize="10" Foreground="#477A4B" FontWeight="SemiBold" /><TextBlock Text="Pronto para operar" FontSize="18" FontWeight="SemiBold" Foreground="#306436" Margin="0,8,0,0" /></StackPanel></Border>
+          <Border Background="#FFF5E7" CornerRadius="9" Padding="18"><StackPanel><TextBlock Text="TAREFA AGENDADA" FontSize="10" Foreground="#936A35" FontWeight="SemiBold" /><TextBlock Text="Verificar no Sistema" FontSize="18" FontWeight="SemiBold" Foreground="#7E5B2F" Margin="0,8,0,0" /></StackPanel></Border>
+        </UniformGrid>
+        <Border Grid.Row="1" Background="White" BorderBrush="#DCE4EC" BorderThickness="1" CornerRadius="10" Padding="18">
+          <DockPanel>
+            <Grid DockPanel.Dock="Top" Margin="0,0,0,12">
+              <TextBlock Text="Renovações carregadas" FontSize="18" FontWeight="SemiBold" Foreground="#172B4D" />
+              <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Renovar" Click="RenewClick" />
+                <Button Content="Forçar" Click="ForceRenewClick" />
+                <Button Content="Cancelar" Click="CancelClick" />
+                <Button Content="Revogar" Click="RevokeClick" />
+                <Button Content="＋ Novo certificado" Click="NewCertificateClick" Background="{DynamicResource AccentBrush}" Foreground="White" BorderThickness="0" />
+              </StackPanel>
+            </Grid>
+            <DataGrid ItemsSource="{Binding Renewals}" SelectedItem="{Binding SelectedRenewal}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" GridLinesVisibility="Horizontal" BorderThickness="0" RowHeight="46" CanUserAddRows="False">
+              <DataGrid.Columns>
+                <DataGridTextColumn Header="Nome amigável" Binding="{Binding FriendlyName}" Width="1.2*" />
+                <DataGridTextColumn Header="Domínios" Binding="{Binding Domains}" Width="2*" />
+                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="*" />
+                <DataGridCheckBoxColumn Header="Editável" Binding="{Binding IsEditable}" Width="80" />
+              </DataGrid.Columns>
+            </DataGrid>
+          </DockPanel>
+        </Border>
+      </Grid>
+    </Grid>
+  </Grid>
+</Window>
