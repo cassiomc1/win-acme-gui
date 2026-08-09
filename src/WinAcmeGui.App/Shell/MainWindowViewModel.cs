@@ -13,6 +13,7 @@ using WinAcmeGui.Domain.Renewals;
 using WinAcmeGui.Infrastructure.Configuration;
 using WinAcmeGui.Infrastructure.Discovery;
 using WinAcmeGui.Infrastructure.Operations;
+using WinAcmeGui.Infrastructure.Renewals;
 
 namespace WinAcmeGui.App.Shell;
 
