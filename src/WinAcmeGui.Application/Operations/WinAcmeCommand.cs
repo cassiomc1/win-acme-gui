@@ -6,7 +6,7 @@ public sealed record WinAcmeCommand(
     string ExecutablePath,
     IReadOnlyList<SensitiveArgument> Arguments)
 {
-    public string DisplayText => string.Join(' ', new[] { ExecutablePath }.Concat(
+    public string DisplayText => string.Join(' ', new[] { Quote(ExecutablePath) }.Concat(
         Arguments.Select(argument => argument.Value.Length == 0
             ? argument.Name
             : $"{argument.Name} {Quote(argument.DisplayValue)}")));

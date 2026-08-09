@@ -18,7 +18,8 @@ public sealed class BackupService(string backupRoot)
         await using (var destination = File.Open(backupPath, FileMode.CreateNew, FileAccess.Write, FileShare.None))
             await source.CopyToAsync(destination, cancellationToken);
 
-        var hash = Convert.ToHexString(await SHA256.HashDataAsync(File.OpenRead(backupPath), cancellationToken));
+        await using var backup = File.OpenRead(backupPath);
+        var hash = Convert.ToHexString(await SHA256.HashDataAsync(backup, cancellationToken));
         var manifestPath = Path.Combine(directory, "manifest.json");
         var manifest = new
         {

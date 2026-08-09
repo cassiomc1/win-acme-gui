@@ -24,8 +24,8 @@
     <None Include="Shell/MainWindow.xaml" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="../WinAcmeGui.Domain/WinAcmeGui.Domain.csproj" />
-    <ProjectReference Include="../WinAcmeGui.Application/WinAcmeGui.Application.csproj" />
-    <ProjectReference Include="../WinAcmeGui.Infrastructure/WinAcmeGui.Infrastructure.csproj" />
+    <ProjectReference Include="../WinAcmeGui.Domain/WinAcmeGui.Domain.csproj" AdditionalProperties="TargetFramework=net8.0" />
+    <ProjectReference Include="../WinAcmeGui.Application/WinAcmeGui.Application.csproj" AdditionalProperties="TargetFramework=net8.0" />
+    <ProjectReference Include="../WinAcmeGui.Infrastructure/WinAcmeGui.Infrastructure.csproj" AdditionalProperties="TargetFramework=net8.0" />
   </ItemGroup>
 </Project>

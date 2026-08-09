@@ -36,6 +36,32 @@ public sealed class WinAcmeConfigurationReaderTests : IDisposable
         result.Endpoint.BaseUri.Should().Be(new Uri("https://acme-v02.api.letsencrypt.org/"));
     }
 
+    [Fact]
+    public async Task Relative_configuration_path_is_resolved_from_installation_directory()
+    {
+        Directory.CreateDirectory(_root);
+        var settingsPath = Path.Combine(_root, "settings.json");
+        await File.WriteAllTextAsync(settingsPath, "{\"Client\":{\"ConfigurationPath\":\"relative-config\"}}");
+        var reader = new WinAcmeConfigurationReader(new StubVersionProbe("2.2.9.1"));
+
+        var result = await reader.ReadAsync(Path.Combine(_root, "wacs.exe"), CancellationToken.None);
+
+        result.ConfigurationPath.Should().Be(Path.GetFullPath(Path.Combine(_root, "relative-config")));
+    }
+
+    [Fact]
+    public async Task Rejects_non_https_acme_endpoint()
+    {
+        Directory.CreateDirectory(_root);
+        var settingsPath = Path.Combine(_root, "settings.json");
+        await File.WriteAllTextAsync(settingsPath, "{\"ACME\":{\"DefaultBaseUri\":\"http://acme-v02.api.letsencrypt.org/\"}}");
+        var reader = new WinAcmeConfigurationReader(new StubVersionProbe("2.2.9.1"));
+
+        var act = () => reader.ReadAsync(Path.Combine(_root, "wacs.exe"), CancellationToken.None);
+
+        await act.Should().ThrowAsync<InvalidDataException>();
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_root)) Directory.Delete(_root, true);

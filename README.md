@@ -10,13 +10,13 @@ The current desktop shell includes:
 
 - dashboard with active installation, endpoint, configuration path and loaded renewals;
 - renewal search surface with official renew, forced renew, cancel and revoke actions;
-- guided certificate draft for manual domains, HTTP/DNS/TLS validation, RSA/EC keys, certificate store/PFX/PEM storage and staging preview;
+  - guided certificate draft for manual domains, HTTP-01 or TLS-ALPN-01 validation, RSA/EC keys, certificate store/PFX/PEM storage and staging preview;
 - Portuguese (Brazil) and English labels;
 - typed, shell-free command execution with secret redaction;
 - backup manifests, diagnostics export and safe ZIP extraction primitives;
-- an allowlisted elevated-worker boundary for operations that need UAC.
+  - an authenticated named-pipe boundary to an allowlisted elevated worker for UAC operations.
 
-The GUI does not decrypt win-acme secrets or edit renewal JSON by hand. Existing settings are only written through explicit, backup-first workflows.
+The GUI does not decrypt win-acme secrets or edit renewal JSON by hand. Existing settings are only written through explicit, backup-first workflows. Generic DNS validation is not exposed because a DNS provider plugin and its credentials must be configured in win-acme first.
 
 ## Build and test
 
@@ -27,7 +27,7 @@ dotnet restore WinAcmeGui.sln
 dotnet test WinAcmeGui.sln --configuration Release
 ```
 
-The WPF visual project targets `net8.0-windows` on Windows. On non-Windows hosts it compiles its testable non-visual layer so the cross-platform suite remains runnable. WPF build and UI smoke tests must run on a Windows 10/11 or Windows Server 2016+ x64 machine.
+The WPF visual project targets `net8.0-windows` on Windows. On non-Windows hosts it compiles its testable non-visual layer so the cross-platform suite remains runnable. WPF execution, real UAC, IIS, Scheduled Tasks and portable-package smoke tests must run on a Windows 10/11 or Windows Server 2016+ x64 machine; this repository does not claim those checks from a macOS/Linux run.
 
 ## Portable package on Windows
 
@@ -35,7 +35,7 @@ The WPF visual project targets `net8.0-windows` on Windows. On non-Windows hosts
 pwsh ./scripts/Publish-Portable.ps1
 ```
 
-The script runs tests, publishes self-contained `win-x64` GUI and worker binaries, copies bilingual documentation and notices, writes a SHA-256 manifest, and creates `artifacts/WinAcmeGui-<version>-win-x64.zip`.
+The script runs tests, publishes self-contained `win-x64` GUI and worker binaries, copies bilingual documentation and notices, writes a relative-path SHA-256 manifest, and creates `artifacts/WinAcmeGui-<version>-win-x64.zip`. A production package must be Authenticode-signed with `-SigningCertificatePath`; `-AllowUnsigned` is reserved for CI/dev validation and cannot pass the runtime worker trust boundary. The release downloader accepts only approved HTTPS GitHub hosts, official x64 assets with a SHA-256 digest, and safe ZIP contents.
 
 Use the staging endpoint for first-run certificate acceptance tests. The GUI never silently overwrites an existing win-acme directory or runs a production mutation without confirmation.
 

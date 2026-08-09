@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.x
+      - name: Restore
+        run: dotnet restore WinAcmeGui.sln
+      - name: Test
+        run: dotnet test WinAcmeGui.sln --configuration Release --no-restore
+      - name: Build
+        run: dotnet build WinAcmeGui.sln --configuration Release --no-restore
+      - name: Dependency vulnerability audit
+        shell: bash
+        run: |
+          set -o pipefail
+          dotnet list "$GITHUB_WORKSPACE/WinAcmeGui.sln" package --vulnerable --include-transitive | tee vulnerability-audit.txt
+          if grep -Eq 'High|Critical|Moderate|Low' vulnerability-audit.txt; then
+            echo 'Vulnerable packages were reported.' >&2
+            exit 1
+          fi

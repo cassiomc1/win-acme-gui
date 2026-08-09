@@ -22,4 +22,17 @@ public sealed class CultureServiceTests
         service.SetCulture("en-US");
         service["Renewals"].Should().Be("Renewals");
     }
+
+    [Fact]
+    public void All_supported_resource_keys_have_values_in_both_languages()
+    {
+        var service = new CultureService();
+        foreach (var key in CultureService.Keys)
+        {
+            service.SetCulture("pt-BR");
+            service[key].Should().NotBeNullOrWhiteSpace();
+            service.SetCulture("en-US");
+            service[key].Should().NotBeNullOrWhiteSpace();
+        }
+    }
 }

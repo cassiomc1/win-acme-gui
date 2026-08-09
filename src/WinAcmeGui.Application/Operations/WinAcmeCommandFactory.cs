@@ -27,15 +27,40 @@ public sealed class WinAcmeCommandFactory
 
     public WinAcmeCommand CreateCertificate(string executablePath, CertificateDraft draft, bool staging)
     {
+        if (!draft.AcceptTerms) throw new ArgumentException("Explicit terms acceptance is required.", nameof(draft));
+        var validationMode = draft.Validation switch
+        {
+            "http-01" or "tls-alpn-01" => draft.Validation,
+            _ => throw new ArgumentException("Unsupported validation mode.", nameof(draft))
+        };
+        if (draft.Store is not ("certificatestore" or "pemfiles" or "pfxfile"))
+            throw new ArgumentException("Unsupported certificate store.", nameof(draft));
+        if (draft.Store is "pemfiles" or "pfxfile"
+            && !IsAbsolutePath(draft.StoragePath))
+            throw new ArgumentException("PEM/PFX storage requires an absolute output path.", nameof(draft));
         var arguments = new List<SensitiveArgument>
         {
             SensitiveArgument.Plain("--source", draft.Source),
             SensitiveArgument.Plain("--host", string.Join(',', draft.Domains)),
-            SensitiveArgument.Plain("--validation", draft.Validation),
+            SensitiveArgument.Plain("--validation", "selfhosting"),
+            SensitiveArgument.Plain("--validationmode", validationMode),
             SensitiveArgument.Plain("--store", draft.Store),
             SensitiveArgument.Plain("--csr", draft.KeyType)
         };
         if (staging) arguments.Add(SensitiveArgument.Plain("--test", string.Empty));
+        if (!string.IsNullOrWhiteSpace(draft.EmailAddress)) arguments.Add(SensitiveArgument.Plain("--emailaddress", draft.EmailAddress));
+        if (draft.Store.Equals("pemfiles", StringComparison.OrdinalIgnoreCase))
+            arguments.Add(SensitiveArgument.Plain("--pemfilespath", draft.StoragePath));
+        if (draft.Store.Equals("pfxfile", StringComparison.OrdinalIgnoreCase))
+            arguments.Add(SensitiveArgument.Plain("--pfxfilepath", draft.StoragePath));
+        if (draft.AcceptTerms) arguments.Add(SensitiveArgument.Plain("--accepttos", string.Empty));
         return new(executablePath, arguments);
     }
+
+    private static bool IsAbsolutePath(string value) =>
+        Path.IsPathFullyQualified(value)
+        || value.Length >= 3
+        && char.IsLetter(value[0])
+        && value[1] == ':'
+        && (value[2] == '\\' || value[2] == '/');
 }

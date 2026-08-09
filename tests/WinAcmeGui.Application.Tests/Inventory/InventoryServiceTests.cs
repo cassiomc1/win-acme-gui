@@ -32,6 +32,46 @@ public sealed class InventoryServiceTests
         result.Renewals.Should().ContainSingle(x => x.FriendlyName == "example.com");
     }
 
+    [Fact]
+    public async Task Keeps_unreadable_renewal_visible_with_diagnostic_status()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "win-acme-gui-inventory-invalid");
+        var snapshot = new ConfigurationSnapshot(
+            Path.Combine(root, "settings.json"),
+            "win-acme",
+            Path.Combine(root, "config"),
+            AcmeEndpoint.Production,
+            new Dictionary<string, string>());
+        var installation = WinAcmeInstallation.Create(Path.Combine(root, "wacs.exe"), new(2, 2, 9, 1), snapshot.ConfigurationPath, snapshot.Endpoint);
+        var service = new InventoryService(
+            new StubConfigurationReader(snapshot),
+            new StubRenewalReader([
+                RenewalReadResult.Invalid("broken.renewal.json", new RenewalDiagnostic("renewal.json.invalid", "broken", true))]));
+
+        var result = await service.LoadAsync(installation, CancellationToken.None);
+
+        result.Renewals.Should().ContainSingle(x => x.Status == RenewalStatus.Unreadable);
+        result.Diagnostics.Should().ContainSingle(x => x.Code == "renewal.json.invalid");
+    }
+
+    [Fact]
+    public async Task Rejects_a_stale_resolved_configuration_snapshot()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "win-acme-gui-inventory-snapshot");
+        var resolved = new ConfigurationSnapshot(
+            Path.Combine(root, "settings.json"),
+            "win-acme",
+            Path.Combine(root, "resolved"),
+            AcmeEndpoint.Production,
+            new Dictionary<string, string>());
+        var installation = WinAcmeInstallation.Create(Path.Combine(root, "wacs.exe"), new(2, 2, 9, 1), Path.Combine(root, "changed"), resolved.Endpoint);
+        var service = new InventoryService(new StubConfigurationReader(resolved), new StubRenewalReader([]));
+
+        var act = () => service.LoadAsync(installation, resolved, CancellationToken.None);
+
+        await act.Should().ThrowAsync<InvalidDataException>();
+    }
+
     private sealed class StubConfigurationReader(ConfigurationSnapshot snapshot) : IWinAcmeConfigurationReader
     {
         public Task<ConfigurationSnapshot> ReadAsync(string executablePath, CancellationToken cancellationToken) => Task.FromResult(snapshot);

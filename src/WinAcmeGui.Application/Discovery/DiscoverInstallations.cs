@@ -2,6 +2,8 @@ using WinAcmeGui.Domain.Installations;
 
 namespace WinAcmeGui.Application.Discovery;
 
+using WinAcmeGui.Application.Configuration;
+
 public interface IInstallationCandidateSource
 {
     Task<IReadOnlyCollection<string>> FindAsync(CancellationToken cancellationToken);
@@ -12,7 +14,14 @@ public interface IInstallationValidator
     Task<InstallationCandidate?> ValidateAsync(string executablePath, CancellationToken cancellationToken);
 }
 
-public sealed record InstallationCandidate(string ExecutablePath, string VersionText, string ConfigurationPath);
+public sealed record InstallationCandidate(
+    string ExecutablePath,
+    string VersionText,
+    string ConfigurationPath,
+    AcmeEndpoint? Endpoint = null,
+    ConfigurationSnapshot? Configuration = null,
+    bool IsOperational = true,
+    string? Diagnostic = null);
 
 public sealed record DiscoveryDiagnostic(string Code, string Message);
 
@@ -51,6 +60,21 @@ public sealed class DiscoverInstallations(
             progress?.Report(path);
             var candidate = await validator.ValidateAsync(path, cancellationToken);
             if (candidate is not null) valid.Add(candidate);
+        }
+
+        foreach (var collision in valid
+            .GroupBy(x => Canonicalize(x.ConfigurationPath), StringComparer.OrdinalIgnoreCase)
+            .Where(x => x.Count() > 1))
+        {
+            diagnostics.Add(new(
+                "discovery.configuration.collision",
+                $"Multiple win-acme executables resolve to the same configuration directory: {collision.Key}"));
+            var message = "This installation is read-only because its configuration path is shared by another discovered executable.";
+            for (var index = 0; index < valid.Count; index++)
+            {
+                if (collision.Contains(valid[index]))
+                    valid[index] = valid[index] with { IsOperational = false, Diagnostic = message };
+            }
         }
 
         return new(valid, diagnostics);
