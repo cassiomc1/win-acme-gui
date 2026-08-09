@@ -3,6 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="win-acme GUI" Width="1280" Height="820" MinWidth="980" MinHeight="640"
         Background="{DynamicResource WindowBackground}" WindowStartupLocation="CenterScreen">
+  <Window.Resources>
+    <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+  </Window.Resources>
   <Grid>
     <Grid.ColumnDefinitions>
       <ColumnDefinition Width="236" />
@@ -13,13 +16,13 @@
       <DockPanel LastChildFill="True">
         <StackPanel DockPanel.Dock="Top" Margin="24,26,20,26">
           <TextBlock Text="win-acme" Foreground="White" FontSize="22" FontWeight="SemiBold" />
-          <TextBlock Text="GUI ADMIN CENTER" Foreground="#8FA9BF" FontSize="10" FontWeight="SemiBold" Margin="1,5,0,0" />
+          <TextBlock Text="{Binding GuiSubtitle}" Foreground="#8FA9BF" FontSize="10" FontWeight="SemiBold" Margin="1,5,0,0" />
         </StackPanel>
         <StackPanel x:Name="NavigationPanel" />
         <StackPanel DockPanel.Dock="Bottom" Margin="20,0,20,22">
           <Border Background="#203B56" CornerRadius="8" Padding="12">
             <StackPanel>
-              <TextBlock Text="STATUS" Foreground="#8FA9BF" FontSize="10" FontWeight="SemiBold" />
+              <TextBlock Text="{Binding StatusLabel}" Foreground="#8FA9BF" FontSize="10" FontWeight="SemiBold" />
               <TextBlock Text="{Binding Status}" Foreground="White" TextWrapping="Wrap" Margin="0,6,0,0" FontSize="11" />
             </StackPanel>
           </Border>
@@ -42,51 +45,70 @@
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
           <Button Content="EN" Click="EnglishClick" AutomationProperties.Name="Switch to English" />
           <Button Content="PT" Click="PortugueseClick" AutomationProperties.Name="Mudar para português" />
-          <Button Content="Baixar win-acme" Click="DownloadClick" AutomationProperties.Name="Baixar win-acme oficial" />
-          <Button Content="↻  Atualizar" Click="RefreshClick" AutomationProperties.Name="Atualizar inventário" />
+          <Button x:Name="CancelOperationButton" Content="{Binding CancelOperationText}" Click="CancelOperationClick" IsEnabled="False" AutomationProperties.Name="Cancelar operação" />
+          <Button Content="{Binding DownloadText}" Click="DownloadClick" AutomationProperties.Name="Baixar win-acme oficial" />
+          <Button Content="{Binding UpdateText}" Click="RefreshClick" AutomationProperties.Name="Atualizar inventário" />
         </StackPanel>
       </Grid>
 
       <Border Grid.Row="1" Background="White" BorderBrush="#DCE4EC" BorderThickness="1" CornerRadius="10" Padding="18" Margin="0,0,0,20">
         <Grid>
           <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-          <StackPanel Grid.Column="0"><TextBlock Text="INSTALAÇÃO ATIVA" FontSize="10" Foreground="{DynamicResource MutedBrush}" FontWeight="SemiBold" /><TextBlock Text="{Binding ActiveCandidate.ExecutablePath, TargetNullValue=—}" Foreground="#243B53" Margin="0,5,16,0" TextTrimming="CharacterEllipsis" /></StackPanel>
-          <StackPanel Grid.Column="1"><TextBlock Text="CONFIGURAÇÃO" FontSize="10" Foreground="{DynamicResource MutedBrush}" FontWeight="SemiBold" /><TextBlock Text="{Binding ActiveConfigurationPath}" Foreground="#243B53" Margin="0,5,16,0" TextTrimming="CharacterEllipsis" /></StackPanel>
-          <StackPanel Grid.Column="2"><TextBlock Text="ENDPOINT ACME" FontSize="10" Foreground="{DynamicResource MutedBrush}" FontWeight="SemiBold" /><TextBlock Text="{Binding ActiveEndpoint}" Foreground="#243B53" Margin="0,5,16,0" /></StackPanel>
-          <Button Grid.Column="3" Content="Selecionar wacs.exe" Click="SelectExecutableClick" VerticalAlignment="Center" />
+          <StackPanel Grid.Column="0"><TextBlock Text="{Binding ActiveInstallationLabel}" FontSize="10" Foreground="{DynamicResource MutedBrush}" FontWeight="SemiBold" /><TextBlock Text="{Binding ActiveCandidate.ExecutablePath, TargetNullValue=—}" Foreground="#243B53" Margin="0,5,16,0" TextTrimming="CharacterEllipsis" /></StackPanel>
+          <StackPanel Grid.Column="1"><TextBlock Text="{Binding ConfigurationPathLabel}" FontSize="10" Foreground="{DynamicResource MutedBrush}" FontWeight="SemiBold" /><TextBlock Text="{Binding ActiveConfigurationPath}" Foreground="#243B53" Margin="0,5,16,0" TextTrimming="CharacterEllipsis" /></StackPanel>
+          <StackPanel Grid.Column="2"><TextBlock Text="{Binding EndpointLabel}" FontSize="10" Foreground="{DynamicResource MutedBrush}" FontWeight="SemiBold" /><TextBlock Text="{Binding ActiveEndpoint}" Foreground="#243B53" Margin="0,5,16,0" /></StackPanel>
+          <Button Grid.Column="3" Content="{Binding SelectExecutableActionText}" Click="SelectExecutableClick" VerticalAlignment="Center" />
         </Grid>
       </Border>
 
-      <Grid Grid.Row="2">
+      <Grid Grid.Row="2" Visibility="{Binding IsDashboard, Converter={StaticResource BoolToVisibility}}">
         <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
         <UniformGrid Grid.Row="0" Columns="3" Margin="0,0,0,18">
-          <Border Background="#E8F2F4" CornerRadius="9" Padding="18" Margin="0,0,10,0"><StackPanel><TextBlock Text="RENOVAÇÕES" FontSize="10" Foreground="#47717D" FontWeight="SemiBold" /><TextBlock Text="{Binding RenewalSummary}" FontSize="22" FontWeight="SemiBold" Foreground="#1D5C69" Margin="0,8,0,0" /></StackPanel></Border>
-          <Border Background="#EEF6EE" CornerRadius="9" Padding="18" Margin="0,0,10,0"><StackPanel><TextBlock Text="SAÚDE" FontSize="10" Foreground="#477A4B" FontWeight="SemiBold" /><TextBlock Text="Pronto para operar" FontSize="18" FontWeight="SemiBold" Foreground="#306436" Margin="0,8,0,0" /></StackPanel></Border>
-          <Border Background="#FFF5E7" CornerRadius="9" Padding="18"><StackPanel><TextBlock Text="TAREFA AGENDADA" FontSize="10" Foreground="#936A35" FontWeight="SemiBold" /><TextBlock Text="Verificar no Sistema" FontSize="18" FontWeight="SemiBold" Foreground="#7E5B2F" Margin="0,8,0,0" /></StackPanel></Border>
+          <Border Background="#E8F2F4" CornerRadius="9" Padding="18" Margin="0,0,10,0"><StackPanel><TextBlock Text="{Binding RenewalsLoadedText}" FontSize="10" Foreground="#47717D" FontWeight="SemiBold" /><TextBlock Text="{Binding RenewalSummary}" FontSize="22" FontWeight="SemiBold" Foreground="#1D5C69" Margin="0,8,0,0" /></StackPanel></Border>
+          <Border Background="#EEF6EE" CornerRadius="9" Padding="18" Margin="0,0,10,0"><StackPanel><TextBlock Text="{Binding HealthLabel}" FontSize="10" Foreground="#477A4B" FontWeight="SemiBold" /><TextBlock Text="{Binding ReadyToOperateText}" FontSize="18" FontWeight="SemiBold" Foreground="#306436" Margin="0,8,0,0" /></StackPanel></Border>
+          <Border Background="#FFF5E7" CornerRadius="9" Padding="18"><StackPanel><TextBlock Text="{Binding ScheduledTaskLabel}" FontSize="10" Foreground="#936A35" FontWeight="SemiBold" /><TextBlock Text="{Binding VerifyInSystemText}" FontSize="18" FontWeight="SemiBold" Foreground="#7E5B2F" Margin="0,8,0,0" /></StackPanel></Border>
         </UniformGrid>
         <Border Grid.Row="1" Background="White" BorderBrush="#DCE4EC" BorderThickness="1" CornerRadius="10" Padding="18">
           <DockPanel>
             <Grid DockPanel.Dock="Top" Margin="0,0,0,12">
-              <TextBlock Text="Renovações carregadas" FontSize="18" FontWeight="SemiBold" Foreground="#172B4D" />
+              <TextBlock Text="{Binding RenewalsLoadedText}" FontSize="18" FontWeight="SemiBold" Foreground="#172B4D" />
               <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Content="Renovar" Click="RenewClick" />
-                <Button Content="Forçar" Click="ForceRenewClick" />
-                <Button Content="Cancelar" Click="CancelClick" />
-                <Button Content="Revogar" Click="RevokeClick" />
-                <Button Content="＋ Novo certificado" Click="NewCertificateClick" Background="{DynamicResource AccentBrush}" Foreground="White" BorderThickness="0" />
+                <Button Content="{Binding RenewText}" Click="RenewClick" IsEnabled="{Binding CanMutateSelectedRenewal}" />
+                <Button Content="{Binding ForceText}" Click="ForceRenewClick" IsEnabled="{Binding CanMutateSelectedRenewal}" />
+                <Button Content="{Binding CancelText}" Click="CancelClick" IsEnabled="{Binding CanMutateSelectedRenewal}" />
+                <Button Content="{Binding RevokeText}" Click="RevokeClick" IsEnabled="{Binding CanMutateSelectedRenewal}" />
+                <Button Content="{Binding NewCertificateActionText}" Click="NewCertificateClick" Background="{DynamicResource AccentBrush}" Foreground="White" BorderThickness="0" />
               </StackPanel>
             </Grid>
-            <DataGrid ItemsSource="{Binding Renewals}" SelectedItem="{Binding SelectedRenewal}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" GridLinesVisibility="Horizontal" BorderThickness="0" RowHeight="46" CanUserAddRows="False">
+            <Grid DockPanel.Dock="Top" Margin="0,0,0,12">
+              <TextBlock Text="{Binding FilterRenewalsText}" VerticalAlignment="Center" Foreground="{DynamicResource MutedBrush}" />
+              <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Width="260" HorizontalAlignment="Right" Padding="8" AutomationProperties.Name="Filtrar renovações" />
+            </Grid>
+            <DataGrid x:Name="RenewalsGrid" ItemsSource="{Binding FilteredRenewals}" SelectedItem="{Binding SelectedRenewal}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" GridLinesVisibility="Horizontal" BorderThickness="0" RowHeight="46" CanUserAddRows="False">
               <DataGrid.Columns>
                 <DataGridTextColumn Header="Nome amigável" Binding="{Binding FriendlyName}" Width="1.2*" />
                 <DataGridTextColumn Header="Domínios" Binding="{Binding Domains}" Width="2*" />
                 <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="*" />
+                <DataGridTextColumn Header="Diagnóstico" Binding="{Binding Diagnostics}" Width="1.5*" />
                 <DataGridCheckBoxColumn Header="Editável" Binding="{Binding IsEditable}" Width="80" />
               </DataGrid.Columns>
             </DataGrid>
           </DockPanel>
         </Border>
       </Grid>
+      <Border Grid.Row="2" Visibility="{Binding IsContextPage, Converter={StaticResource BoolToVisibility}}" Background="White" BorderBrush="#DCE4EC" BorderThickness="1" CornerRadius="10" Padding="28">
+        <StackPanel VerticalAlignment="Top">
+          <TextBlock Text="{Binding PageTitle}" FontSize="24" FontWeight="SemiBold" Foreground="#172B4D" />
+          <TextBlock Text="{Binding PageDescription}" TextWrapping="Wrap" Foreground="{DynamicResource MutedBrush}" Margin="0,8,0,22" />
+          <Button Content="{Binding ContextActionText}" Click="ContextActionClick" Visibility="{Binding HasContextAction, Converter={StaticResource BoolToVisibility}}" HorizontalAlignment="Left" Padding="16,9" />
+          <Border Background="#F6F8FB" CornerRadius="8" Padding="16" Margin="0,20,0,0">
+            <StackPanel>
+              <TextBlock Text="{Binding StatusLabel}" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource MutedBrush}" />
+              <TextBlock Text="{Binding Status}" TextWrapping="Wrap" Foreground="#243B53" Margin="0,6,0,0" />
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </Border>
     </Grid>
   </Grid>
 </Window>

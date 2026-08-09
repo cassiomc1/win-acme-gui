@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\WinAcmeGui.Domain\WinAcmeGui.Domain.csproj" />
     <ProjectReference Include="..\WinAcmeGui.Application\WinAcmeGui.Application.csproj" />
+    <ProjectReference Include="..\WinAcmeGui.Infrastructure\WinAcmeGui.Infrastructure.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

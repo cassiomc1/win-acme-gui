@@ -1,0 +1,36 @@
+name: Windows acceptance
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.x
+      - name: Restore
+        run: dotnet restore WinAcmeGui.sln
+      - name: Test
+        run: dotnet test WinAcmeGui.sln --configuration Release --no-restore
+      - name: Build WPF and elevated worker
+        run: dotnet build WinAcmeGui.sln --configuration Release --no-restore
+      - name: Package portable release
+        shell: pwsh
+        run: ./scripts/Publish-Portable.ps1 -Version "0.0.0-${{ github.sha }}" -AllowUnsigned
+      - name: Verify package contents and hashes
+        shell: pwsh
+        run: |
+          $package = Get-ChildItem artifacts -Filter 'WinAcmeGui-*.zip' | Select-Object -First 1
+          if (-not $package) { throw 'Portable package was not created.' }
+          ./scripts/Smoke-Test.ps1 -Package $package.FullName

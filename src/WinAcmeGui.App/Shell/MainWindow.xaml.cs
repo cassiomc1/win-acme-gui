@@ -9,12 +9,19 @@ namespace WinAcmeGui.App.Shell;
 public partial class MainWindow : Window
 {
     private readonly CultureService _culture = new();
+    private CancellationTokenSource? _downloadCancellation;
 
     public MainWindow()
     {
         InitializeComponent();
         var viewModel = new MainWindowViewModel(_culture);
         DataContext = viewModel;
+        viewModel.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName is nameof(MainWindowViewModel.CanCancelOperation) or nameof(MainWindowViewModel.CancelOperationText))
+                UpdateCancelOperationButton(viewModel);
+        };
+        RefreshGridHeaders();
         foreach (var item in viewModel.Sections)
         {
             var button = new System.Windows.Controls.Button
@@ -28,7 +35,12 @@ public partial class MainWindow : Window
                 Padding = new Thickness(24, 12, 10, 12),
                 Margin = new Thickness(0)
             };
-            button.Click += (_, _) => viewModel.SelectSection((string)button.Tag);
+            button.Click += async (_, _) =>
+            {
+                var section = (string)button.Tag;
+                viewModel.SelectSection(section);
+                if (section.Equals("new", StringComparison.OrdinalIgnoreCase)) await OpenCertificateWindow();
+            };
             NavigationPanel.Children.Add(button);
             item.TitleChanged += (_, _) => button.Content = item.Title;
         }
@@ -41,21 +53,26 @@ public partial class MainWindow : Window
     {
         _culture.SetCulture("en-US");
         ((MainWindowViewModel)DataContext).RefreshLabels();
+        RefreshGridHeaders();
     }
 
     private void PortugueseClick(object sender, RoutedEventArgs e)
     {
         _culture.SetCulture("pt-BR");
         ((MainWindowViewModel)DataContext).RefreshLabels();
+        RefreshGridHeaders();
     }
 
     private async void DownloadClick(object sender, RoutedEventArgs e)
     {
+        using var cancellation = new CancellationTokenSource();
+        _downloadCancellation = cancellation;
+        UpdateCancelOperationButton((MainWindowViewModel)DataContext);
         try
         {
-            var verifier = new PackageVerifier(["api.github.com", "github.com"]);
-            var catalog = new OfficialReleaseCatalog(new HttpClient(), verifier);
-            var asset = await catalog.GetLatestAsync(CancellationToken.None);
+            var verifier = new PackageVerifier(["api.github.com", "github.com", "release-assets.githubusercontent.com", "objects.githubusercontent.com"]);
+            var catalog = new OfficialReleaseCatalog(verifier);
+            var asset = await catalog.GetLatestAsync(cancellation.Token);
             var destination = Path.Combine(AppContext.BaseDirectory, "win-acme-downloads", asset.Version);
             try
             {
@@ -68,31 +85,61 @@ public partial class MainWindow : Window
             {
                 destination = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "WinAcmeGui", "win-acme-downloads", asset.Version);
             }
-            var downloader = new WinAcmeDownloader(new OfficialReleaseClient(new HttpClient(), verifier), new SafeZipExtractor());
-            await downloader.DownloadAndExtractAsync(asset, destination, null, CancellationToken.None);
+            var downloader = new WinAcmeDownloader(
+                new OfficialReleaseClient(verifier),
+                new SafeZipExtractor(),
+                new WindowsAuthenticodeSignatureVerifier());
+            await downloader.DownloadAndExtractAsync(asset, destination, null, cancellation.Token);
             MessageBox.Show($"win-acme {asset.Version} instalado em:\n{destination}\n\nUse Atualizar para detectá-lo.", "win-acme GUI", MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
         {
             MessageBox.Show(ex.Message, "Download do win-acme", MessageBoxButton.OK, MessageBoxImage.Error);
         }
+        finally
+        {
+            _downloadCancellation = null;
+            UpdateCancelOperationButton((MainWindowViewModel)DataContext);
+        }
     }
 
-    private async void SelectExecutableClick(object sender, RoutedEventArgs e)
+    private void CancelOperationClick(object sender, RoutedEventArgs e)
+    {
+        ((MainWindowViewModel)DataContext).CancelActiveOperation();
+        _downloadCancellation?.Cancel();
+    }
+
+    private async void SelectExecutableClick(object sender, RoutedEventArgs e) => await SelectExecutableAsync();
+
+    private async Task SelectExecutableAsync()
     {
         var dialog = new OpenFileDialog { Filter = "win-acme executable|wacs.exe;wacs|All files|*.*", Title = _culture["SelectExecutable"] };
         if (dialog.ShowDialog(this) == true)
             await ((MainWindowViewModel)DataContext).UseExecutableAsync(dialog.FileName);
     }
 
-    private void NewCertificateClick(object sender, RoutedEventArgs e) =>
-        OpenCertificateWindow();
+    private async void NewCertificateClick(object sender, RoutedEventArgs e) =>
+        await OpenCertificateWindow();
 
-    private void OpenCertificateWindow()
+    private async void ContextActionClick(object sender, RoutedEventArgs e)
+    {
+        var vm = (MainWindowViewModel)DataContext;
+        if (vm.SelectedSection.Equals("new", StringComparison.OrdinalIgnoreCase))
+        {
+            await OpenCertificateWindow();
+            return;
+        }
+
+        if (vm.SelectedSection.Equals("installation", StringComparison.OrdinalIgnoreCase))
+            await SelectExecutableAsync();
+    }
+
+    private async Task OpenCertificateWindow()
     {
         var vm = (MainWindowViewModel)DataContext;
         if (vm.ActiveCandidate is null) { MessageBox.Show("Select or discover a win-acme installation first."); return; }
-        new NewCertificateWindow(vm.ActiveCandidate.ExecutablePath) { Owner = this }.ShowDialog();
+        var dialog = new NewCertificateWindow(vm.ActiveCandidate.ExecutablePath, vm.CreateCertificateAsync, _culture) { Owner = this };
+        if (dialog.ShowDialog() == true) await vm.LoadAsync();
     }
 
     private async void RenewClick(object sender, RoutedEventArgs e) => await RunRenewal(false);
@@ -101,13 +148,23 @@ public partial class MainWindow : Window
 
     private async Task RunRenewal(bool force)
     {
-        if (((MainWindowViewModel)DataContext).SelectedRenewal is null)
+        var vm = (MainWindowViewModel)DataContext;
+        if (vm.SelectedRenewal is null)
         {
             MessageBox.Show("Select a renewal first.", "win-acme GUI", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
-        var result = await ((MainWindowViewModel)DataContext).RenewSelectedAsync(force);
-        MessageBox.Show(result?.ErrorCode is null ? "Operation finished successfully." : result.ErrorCode, "win-acme GUI", MessageBoxButton.OK, result?.ErrorCode is null ? MessageBoxImage.Information : MessageBoxImage.Error);
+        if (force && MessageBox.Show(this, "Forçar a renovação pode emitir uma nova ordem. Continuar?", "Confirmar renovação forçada", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+            return;
+        try
+        {
+            var result = await vm.RenewSelectedAsync(force);
+            MessageBox.Show(result?.ErrorCode is null ? "Operation finished successfully." : result.ErrorCode, "win-acme GUI", MessageBoxButton.OK, result?.ErrorCode is null ? MessageBoxImage.Information : MessageBoxImage.Error);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(ex.Message, "win-acme GUI", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     private async void CancelClick(object sender, RoutedEventArgs e)
@@ -141,4 +198,17 @@ public partial class MainWindow : Window
         dialog.Content = panel;
         return dialog.ShowDialog() == true ? input.Text : string.Empty;
     }
+
+    private void RefreshGridHeaders()
+    {
+        if (RenewalsGrid.Columns.Count < 5) return;
+        RenewalsGrid.Columns[0].Header = _culture["FriendlyName"];
+        RenewalsGrid.Columns[1].Header = _culture["Domains"];
+        RenewalsGrid.Columns[2].Header = _culture["StatusColumn"];
+        RenewalsGrid.Columns[3].Header = _culture["Diagnostics"];
+        RenewalsGrid.Columns[4].Header = _culture["Editable"];
+    }
+
+    private void UpdateCancelOperationButton(MainWindowViewModel viewModel) =>
+        CancelOperationButton.IsEnabled = viewModel.CanCancelOperation || _downloadCancellation is not null;
 }

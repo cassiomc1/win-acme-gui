@@ -32,6 +32,19 @@ public sealed class ManageRenewalTests
         runner.Commands.Single().DisplayText.Should().Contain("--force");
     }
 
+    [Fact]
+    public async Task Read_only_renewal_cannot_be_mutated()
+    {
+        var runner = new StubRunner();
+        var readOnly = Renewal with { IsEditable = false };
+
+        var result = await new ManageRenewal(runner, new WinAcmeCommandFactory()).RenewAsync(
+            @"C:\wacs.exe", readOnly, false, CancellationToken.None);
+
+        result.ErrorCode.Should().Be("renewal.read_only");
+        runner.Commands.Should().BeEmpty();
+    }
+
     private sealed class StubRunner : IWinAcmeRunner
     {
         public List<WinAcmeCommand> Commands { get; } = [];

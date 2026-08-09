@@ -34,6 +34,21 @@ public sealed class DiscoverInstallationsTests
         result.Diagnostics.Should().Contain(x => x.Code == "discovery.source.failed");
     }
 
+    [Fact]
+    public async Task Blocks_installations_that_share_a_configuration_path()
+    {
+        var sources = new IInstallationCandidateSource[]
+        {
+            new StubSource(@"C:\Tools\one\wacs.exe"),
+            new StubSource(@"C:\Tools\two\wacs.exe")
+        };
+
+        var result = await new DiscoverInstallations(sources, new SharedConfigValidator()).ExecuteAsync(null, CancellationToken.None);
+
+        result.Installations.Should().HaveCount(2).And.OnlyContain(x => !x.IsOperational);
+        result.Diagnostics.Should().Contain(x => x.Code == "discovery.configuration.collision");
+    }
+
     private sealed class StubSource(string path) : IInstallationCandidateSource
     {
         public Task<IReadOnlyCollection<string>> FindAsync(CancellationToken cancellationToken) => Task.FromResult<IReadOnlyCollection<string>>([path]);
@@ -48,5 +63,11 @@ public sealed class DiscoverInstallationsTests
     {
         public Task<InstallationCandidate?> ValidateAsync(string executablePath, CancellationToken cancellationToken) =>
             Task.FromResult<InstallationCandidate?>(new InstallationCandidate(executablePath, "2.2.9.1", executablePath));
+    }
+
+    private sealed class SharedConfigValidator : IInstallationValidator
+    {
+        public Task<InstallationCandidate?> ValidateAsync(string executablePath, CancellationToken cancellationToken) =>
+            Task.FromResult<InstallationCandidate?>(new InstallationCandidate(executablePath, "2.2.9.1", @"C:\Shared\config"));
     }
 }

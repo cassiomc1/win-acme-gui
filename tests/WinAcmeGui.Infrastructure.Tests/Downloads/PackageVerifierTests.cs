@@ -14,4 +14,12 @@ public sealed class PackageVerifierTests
         verifier.IsApproved(new Uri("https://evil.example/wacs.zip")).Should().BeFalse();
         verifier.IsApproved(new Uri("https://github.com/wacs.zip")).Should().BeTrue();
     }
+
+    [Theory]
+    [InlineData(null, false)]
+    [InlineData("", false)]
+    [InlineData("not-a-digest", false)]
+    [InlineData("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", true)]
+    public void Validates_sha256_digests(string? digest, bool expected) =>
+        PackageVerifier.IsSha256Digest(digest).Should().Be(expected);
 }

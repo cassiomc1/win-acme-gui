@@ -15,5 +15,29 @@ public sealed record RenewalReadResult(
     IReadOnlyList<RenewalDiagnostic> Diagnostics)
 {
     public static RenewalReadResult Invalid(string path, params RenewalDiagnostic[] diagnostics) =>
-        new(path, false, false, null, diagnostics);
+        new(
+            path,
+            false,
+            false,
+            new Renewal(
+                GetFallbackId(path),
+                GetFallbackId(path),
+                [],
+                RenewalStatus.Unreadable,
+                false,
+                path,
+                diagnostics),
+            diagnostics);
+
+    public Renewal ToDisplayRenewal() => Renewal ?? new Renewal(
+        GetFallbackId(SourcePath),
+        GetFallbackId(SourcePath),
+        [],
+        RenewalStatus.Unreadable,
+        false,
+        SourcePath,
+        Diagnostics);
+
+    private static string GetFallbackId(string path) =>
+        Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(path));
 }
