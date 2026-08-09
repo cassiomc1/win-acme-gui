@@ -36,7 +36,7 @@ public sealed class WinAcmeProcessRunnerTests
         var command = new WinAcmeCommand(
             executable,
             OperatingSystem.IsWindows()
-                ? [SensitiveArgument.Plain("/c", "echo out & echo err 1>&2")]
+                ? [SensitiveArgument.Plain("/c", "echo out&echo err 1>&2")]
                 : [SensitiveArgument.Plain("-c", "printf 'out\\n'; printf 'err\\n' 1>&2")]);
 
         var result = await runner.RunAsync(command, null, CancellationToken.None);

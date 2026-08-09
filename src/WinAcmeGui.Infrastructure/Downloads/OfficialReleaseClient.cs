@@ -24,19 +24,21 @@ public sealed class OfficialReleaseClient
             if (response.Content.Headers.ContentLength is > MaxDownloadSize)
                 throw new InvalidDataException("Downloaded package exceeds the maximum allowed size.");
 
-            await using var input = await response.Content.ReadAsStreamAsync(cancellationToken);
-            await using var output = File.Open(partial, FileMode.CreateNew, FileAccess.Write, FileShare.None);
-            var buffer = new byte[128 * 1024];
-            long total = 0;
-            while (true)
+            await using (var input = await response.Content.ReadAsStreamAsync(cancellationToken))
+            await using (var output = File.Open(partial, FileMode.CreateNew, FileAccess.Write, FileShare.None))
             {
-                var read = await input.ReadAsync(buffer.AsMemory(), cancellationToken);
-                if (read == 0) break;
-                total += read;
-                if (total > MaxDownloadSize) throw new InvalidDataException("Downloaded package exceeds the maximum allowed size.");
-                await output.WriteAsync(buffer.AsMemory(0, read), cancellationToken);
+                var buffer = new byte[128 * 1024];
+                long total = 0;
+                while (true)
+                {
+                    var read = await input.ReadAsync(buffer.AsMemory(), cancellationToken);
+                    if (read == 0) break;
+                    total += read;
+                    if (total > MaxDownloadSize) throw new InvalidDataException("Downloaded package exceeds the maximum allowed size.");
+                    await output.WriteAsync(buffer.AsMemory(0, read), cancellationToken);
+                }
+                await output.FlushAsync(cancellationToken);
             }
-            await output.FlushAsync(cancellationToken);
             File.Move(partial, fullDestination);
         }
         finally
