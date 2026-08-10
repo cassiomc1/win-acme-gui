@@ -26,4 +26,24 @@ public sealed class RenewalFilterTests
     {
         RenewalFilter.Apply(Renewals, " ").Select(x => x.Id).Should().Equal("one", "two", "three");
     }
+
+    [Fact]
+    public void A_status_filter_keeps_only_that_status()
+    {
+        RenewalFilter.Apply(Renewals, null, RenewalStatus.DueSoon).Select(x => x.Id).Should().Equal("two");
+        RenewalFilter.Apply(Renewals, null, RenewalStatus.Expired).Should().BeEmpty();
+    }
+
+    [Fact]
+    public void A_null_status_keeps_every_status()
+    {
+        RenewalFilter.Apply(Renewals, null, null).Should().HaveCount(3);
+    }
+
+    [Fact]
+    public void Text_and_status_filters_are_combined()
+    {
+        RenewalFilter.Apply(Renewals, "example", RenewalStatus.Healthy).Select(x => x.Id).Should().Equal("one");
+        RenewalFilter.Apply(Renewals, "staging", RenewalStatus.Healthy).Should().BeEmpty();
+    }
 }

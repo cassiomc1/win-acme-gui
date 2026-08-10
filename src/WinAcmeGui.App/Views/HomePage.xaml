@@ -1,0 +1,115 @@
+<UserControl x:Class="WinAcmeGui.App.Views.HomePage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:WinAcmeGui.App.Views">
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+
+    <!-- Four KPIs: total, healthy, due soon, needs attention. -->
+    <UniformGrid Grid.Row="0" Columns="4" Margin="0,0,0,18">
+      <views:KpiCard Margin="0,0,12,0"
+                     Caption="{Binding Culture[TotalRenewals]}"
+                     Value="{Binding TotalRenewalCount}"
+                     Hint="{Binding Culture[TotalHint]}"
+                     AccentKey="AccentBrush" />
+      <views:KpiCard Margin="0,0,12,0"
+                     Caption="{Binding Culture[HealthyRenewals]}"
+                     Value="{Binding HealthyRenewalCount}"
+                     Hint="{Binding Culture[HealthyHint]}"
+                     AccentKey="StatusHealthyBrush" />
+      <views:KpiCard Margin="0,0,12,0"
+                     Caption="{Binding Culture[DueSoonRenewals]}"
+                     Value="{Binding DueSoonRenewalCount}"
+                     Hint="{Binding Culture[DueSoonHint]}"
+                     AccentKey="StatusWarningBrush" />
+      <views:KpiCard Caption="{Binding Culture[AttentionRenewals]}"
+                     Value="{Binding AttentionRenewalCount}"
+                     Hint="{Binding Culture[AttentionHint]}"
+                     AccentKey="StatusDangerBrush" />
+    </UniformGrid>
+
+    <Grid Grid.Row="1">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="1.5*" />
+        <ColumnDefinition Width="1*" />
+      </Grid.ColumnDefinitions>
+
+      <!-- Health and readiness summary, or the first-run guidance when nothing was found. -->
+      <Border Grid.Column="0" Style="{StaticResource Card}" Margin="0,0,14,0">
+        <Grid>
+          <StackPanel Visibility="{Binding HasActiveInstallation, Converter={StaticResource BoolToVisibility}}">
+            <TextBlock Text="{Binding Culture[SessionState]}" Style="{StaticResource SubtitleText}" />
+            <Border Style="{StaticResource Badge}"
+                    Margin="0,12,0,0"
+                    Background="{Binding HealthBrushKey, Converter={StaticResource KeyToSoftBrush}}">
+              <TextBlock Text="{Binding HealthText}"
+                         Style="{StaticResource BadgeText}"
+                         Foreground="{Binding HealthBrushKey, Converter={StaticResource KeyToBrush}}" />
+            </Border>
+            <TextBlock Text="{Binding RenewalSummary}" Style="{StaticResource BodyText}" Margin="0,14,0,0" />
+            <TextBlock Text="{Binding Culture[ElevationMode]}" Style="{StaticResource CaptionText}" Margin="0,18,0,0" />
+            <TextBlock Text="{Binding ExecutionModeText}" Style="{StaticResource BodyText}" Margin="0,4,0,0" />
+            <TextBlock Text="{Binding Culture[SettingsFile]}" Style="{StaticResource CaptionText}" Margin="0,14,0,0" />
+            <TextBlock Text="{Binding SettingsPath}" Style="{StaticResource PathText}" Margin="0,4,0,0"
+                       ToolTip="{Binding SettingsPath}" />
+            <TextBlock Text="{Binding Culture[VerifyInSystem]}"
+                       Style="{StaticResource SecondaryText}"
+                       FontSize="{DynamicResource FontSizeSmall}"
+                       Margin="0,18,0,0" />
+          </StackPanel>
+
+          <views:EmptyState Glyph="⌕"
+                            Title="{Binding Culture[NoInstallation]}"
+                            Hint="{Binding Culture[NoInstallationHint]}"
+                            Visibility="{Binding HasNoInstallation, Converter={StaticResource BoolToVisibility}}">
+            <views:EmptyState.ActionContent>
+              <StackPanel Orientation="Horizontal">
+                <Button Content="{Binding Culture[Download]}"
+                        Style="{StaticResource PrimaryButton}"
+                        Margin="0,0,8,0"
+                        Command="{Binding DownloadCommand}" />
+                <Button Content="{Binding Culture[SelectExecutableAction]}"
+                        Style="{StaticResource SecondaryButton}"
+                        Command="{Binding SelectExecutableCommand}" />
+              </StackPanel>
+            </views:EmptyState.ActionContent>
+          </views:EmptyState>
+        </Grid>
+      </Border>
+
+      <!-- Discovery diagnostics: shared config directories, unreadable renewal documents, source failures. -->
+      <Border Grid.Column="1" Style="{StaticResource Card}">
+        <DockPanel>
+          <TextBlock DockPanel.Dock="Top"
+                     Text="{Binding Culture[DiscoveryDiagnostics]}"
+                     Style="{StaticResource SubtitleText}"
+                     Margin="0,0,0,12" />
+          <TextBlock DockPanel.Dock="Top"
+                     Text="{Binding Culture[DiagnosticsNone]}"
+                     Style="{StaticResource SecondaryText}"
+                     Visibility="{Binding HasDiscoveryDiagnostics, Converter={StaticResource InverseBoolToVisibility}}" />
+          <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding DiscoveryDiagnostics}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Border Background="{DynamicResource StatusWarningSoftBrush}"
+                          CornerRadius="{DynamicResource RadiusSmall}"
+                          Padding="12,9,12,9"
+                          Margin="0,0,0,8">
+                    <TextBlock Text="{Binding}"
+                               Style="{StaticResource BodyText}"
+                               FontSize="{DynamicResource FontSizeSmall}"
+                               Foreground="{DynamicResource StatusWarningBrush}" />
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+        </DockPanel>
+      </Border>
+    </Grid>
+  </Grid>
+</UserControl>

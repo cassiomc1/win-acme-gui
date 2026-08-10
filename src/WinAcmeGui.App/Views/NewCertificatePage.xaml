@@ -1,0 +1,37 @@
+<UserControl x:Class="WinAcmeGui.App.Views.NewCertificatePage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <!-- Landing surface for the wizard: states the guarantees before anything is executed. -->
+  <Border Style="{StaticResource Card}">
+    <StackPanel VerticalAlignment="Top" MaxWidth="720" HorizontalAlignment="Left">
+      <TextBlock Text="{Binding Culture[CertificateTitle]}" Style="{StaticResource TitleText}" />
+      <TextBlock Text="{Binding Culture[CertificateInstructions]}"
+                 Style="{StaticResource SecondaryText}"
+                 Margin="0,8,0,0" />
+
+      <Border Style="{StaticResource SoftCard}" Margin="0,20,0,0">
+        <StackPanel>
+          <TextBlock Text="{Binding Culture[UseStagingHint]}" Style="{StaticResource BodyText}" />
+          <TextBlock Text="{Binding Culture[AcceptTerms]}"
+                     Style="{StaticResource SecondaryText}"
+                     FontSize="{DynamicResource FontSizeSmall}"
+                     Margin="0,8,0,0" />
+        </StackPanel>
+      </Border>
+
+      <Button Content="{Binding Culture[OpenCertificate]}"
+              Style="{StaticResource PrimaryButton}"
+              HorizontalAlignment="Left"
+              Margin="0,20,0,0"
+              Padding="18,9,18,9"
+              Command="{Binding OpenCertificateWizardCommand}" />
+
+      <!-- Reachable without an installation, so the requirement is spelled out here too. -->
+      <TextBlock Text="{Binding Culture[SelectInstallationFirst]}"
+                 Style="{StaticResource SecondaryText}"
+                 FontSize="{DynamicResource FontSizeSmall}"
+                 Margin="0,12,0,0"
+                 Visibility="{Binding HasNoInstallation, Converter={StaticResource BoolToVisibility}}" />
+    </StackPanel>
+  </Border>
+</UserControl>

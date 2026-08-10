@@ -1,114 +1,151 @@
 <Window x:Class="WinAcmeGui.App.Shell.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="win-acme GUI" Width="1280" Height="820" MinWidth="980" MinHeight="640"
-        Background="{DynamicResource WindowBackground}" WindowStartupLocation="CenterScreen">
-  <Window.Resources>
-    <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
-  </Window.Resources>
+        xmlns:views="clr-namespace:WinAcmeGui.App.Views"
+        Title="win-acme GUI"
+        Width="1320" Height="860" MinWidth="1040" MinHeight="680"
+        Background="{DynamicResource WindowBackground}"
+        TextOptions.TextFormattingMode="Display"
+        UseLayoutRounding="True"
+        WindowStartupLocation="CenterScreen">
+
+  <!-- F5 refreshes, Esc cancels the running operation, Ctrl+N opens the certificate wizard. -->
+  <Window.InputBindings>
+    <KeyBinding Key="F5" Command="{Binding RefreshCommand}" />
+    <KeyBinding Key="Escape" Command="{Binding CancelOperationCommand}" />
+    <KeyBinding Key="N" Modifiers="Control" Command="{Binding OpenCertificateWizardCommand}" />
+  </Window.InputBindings>
+
   <Grid>
     <Grid.ColumnDefinitions>
-      <ColumnDefinition Width="236" />
+      <ColumnDefinition Width="248" />
       <ColumnDefinition Width="*" />
     </Grid.ColumnDefinitions>
 
+    <!-- Sidebar: brand, navigation, live status. -->
     <Border Grid.Column="0" Background="{DynamicResource SidebarBackground}">
       <DockPanel LastChildFill="True">
-        <StackPanel DockPanel.Dock="Top" Margin="24,26,20,26">
-          <TextBlock Text="win-acme" Foreground="White" FontSize="22" FontWeight="SemiBold" />
-          <TextBlock Text="{Binding GuiSubtitle}" Foreground="#8FA9BF" FontSize="10" FontWeight="SemiBold" Margin="1,5,0,0" />
+        <StackPanel DockPanel.Dock="Top" Margin="18,26,18,20">
+          <TextBlock Text="win-acme"
+                     FontFamily="{DynamicResource UiFontFamily}"
+                     FontSize="{DynamicResource FontSizeTitle}"
+                     FontWeight="SemiBold"
+                     Foreground="{DynamicResource SidebarTextBrush}" />
+          <TextBlock Text="{Binding Culture[AppSubtitle]}"
+                     Margin="1,4,0,0"
+                     FontFamily="{DynamicResource UiFontFamily}"
+                     FontSize="{DynamicResource FontSizeCaption}"
+                     FontWeight="SemiBold"
+                     Foreground="{DynamicResource SidebarMutedBrush}" />
         </StackPanel>
-        <StackPanel x:Name="NavigationPanel" />
-        <StackPanel DockPanel.Dock="Bottom" Margin="20,0,20,22">
-          <Border Background="#203B56" CornerRadius="8" Padding="12">
-            <StackPanel>
-              <TextBlock Text="{Binding StatusLabel}" Foreground="#8FA9BF" FontSize="10" FontWeight="SemiBold" />
-              <TextBlock Text="{Binding Status}" Foreground="White" TextWrapping="Wrap" Margin="0,6,0,0" FontSize="11" />
-            </StackPanel>
-          </Border>
-        </StackPanel>
+
+        <Border DockPanel.Dock="Bottom" Margin="14,0,14,16"
+                Background="{DynamicResource SidebarSelectedBackground}"
+                CornerRadius="{DynamicResource RadiusMedium}"
+                Padding="14,12,14,12">
+          <StackPanel>
+            <TextBlock Text="{Binding Culture[Status]}"
+                       FontFamily="{DynamicResource UiFontFamily}"
+                       FontSize="{DynamicResource FontSizeCaption}"
+                       FontWeight="SemiBold"
+                       Foreground="{DynamicResource SidebarMutedBrush}" />
+            <TextBlock Text="{Binding Status}"
+                       Margin="0,6,0,0"
+                       MaxHeight="88"
+                       FontFamily="{DynamicResource UiFontFamily}"
+                       FontSize="{DynamicResource FontSizeSmall}"
+                       Foreground="{DynamicResource SidebarTextBrush}"
+                       TextWrapping="Wrap"
+                       TextTrimming="CharacterEllipsis" />
+            <ProgressBar Style="{StaticResource BusyBar}"
+                         Margin="0,10,0,0"
+                         Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" />
+          </StackPanel>
+        </Border>
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+          <ListBox x:Name="NavigationList"
+                   Style="{StaticResource NavigationList}"
+                   ItemsSource="{Binding Sections}"
+                   SelectedItem="{Binding SelectedSection, Mode=TwoWay}"
+                   AutomationProperties.Name="{Binding Culture[AppSubtitle]}" />
+        </ScrollViewer>
       </DockPanel>
     </Border>
 
-    <Grid Grid.Column="1" Margin="34,28,34,28">
+    <!-- Content column: header, installation summary, active page. -->
+    <Grid Grid.Column="1" Margin="{DynamicResource PagePadding}">
       <Grid.RowDefinitions>
         <RowDefinition Height="Auto" />
         <RowDefinition Height="Auto" />
         <RowDefinition Height="*" />
       </Grid.RowDefinitions>
 
-      <Grid Grid.Row="0" Margin="0,0,0,24">
-        <StackPanel>
-          <TextBlock Text="{Binding PageTitle}" FontSize="29" FontWeight="SemiBold" Foreground="#172B4D" />
-          <TextBlock Text="{Binding ActiveVersion, StringFormat=win-acme {0}}" Foreground="{DynamicResource MutedBrush}" Margin="0,5,0,0" />
+      <Grid Grid.Row="0" Margin="0,0,0,20">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+          <TextBlock Text="{Binding PageTitle}" Style="{StaticResource DisplayText}" />
+          <TextBlock Text="{Binding PageDescription}"
+                     Style="{StaticResource SecondaryText}"
+                     Margin="0,4,24,0" />
         </StackPanel>
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-          <Button Content="EN" Click="EnglishClick" AutomationProperties.Name="Switch to English" />
-          <Button Content="PT" Click="PortugueseClick" AutomationProperties.Name="Mudar para português" />
-          <Button x:Name="CancelOperationButton" Content="{Binding CancelOperationText}" Click="CancelOperationClick" IsEnabled="False" AutomationProperties.Name="Cancelar operação" />
-          <Button Content="{Binding DownloadText}" Click="DownloadClick" AutomationProperties.Name="Baixar win-acme oficial" />
-          <Button Content="{Binding UpdateText}" Click="RefreshClick" AutomationProperties.Name="Atualizar inventário" />
-        </StackPanel>
-      </Grid>
 
-      <Border Grid.Row="1" Background="White" BorderBrush="#DCE4EC" BorderThickness="1" CornerRadius="10" Padding="18" Margin="0,0,0,20">
-        <Grid>
-          <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-          <StackPanel Grid.Column="0"><TextBlock Text="{Binding ActiveInstallationLabel}" FontSize="10" Foreground="{DynamicResource MutedBrush}" FontWeight="SemiBold" /><TextBlock Text="{Binding ActiveCandidate.ExecutablePath, TargetNullValue=—}" Foreground="#243B53" Margin="0,5,16,0" TextTrimming="CharacterEllipsis" /></StackPanel>
-          <StackPanel Grid.Column="1"><TextBlock Text="{Binding ConfigurationPathLabel}" FontSize="10" Foreground="{DynamicResource MutedBrush}" FontWeight="SemiBold" /><TextBlock Text="{Binding ActiveConfigurationPath}" Foreground="#243B53" Margin="0,5,16,0" TextTrimming="CharacterEllipsis" /></StackPanel>
-          <StackPanel Grid.Column="2"><TextBlock Text="{Binding EndpointLabel}" FontSize="10" Foreground="{DynamicResource MutedBrush}" FontWeight="SemiBold" /><TextBlock Text="{Binding ActiveEndpoint}" Foreground="#243B53" Margin="0,5,16,0" /></StackPanel>
-          <Button Grid.Column="3" Content="{Binding SelectExecutableActionText}" Click="SelectExecutableClick" VerticalAlignment="Center" />
-        </Grid>
-      </Border>
-
-      <Grid Grid.Row="2" Visibility="{Binding IsDashboard, Converter={StaticResource BoolToVisibility}}">
-        <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
-        <UniformGrid Grid.Row="0" Columns="3" Margin="0,0,0,18">
-          <Border Background="#E8F2F4" CornerRadius="9" Padding="18" Margin="0,0,10,0"><StackPanel><TextBlock Text="{Binding RenewalsLoadedText}" FontSize="10" Foreground="#47717D" FontWeight="SemiBold" /><TextBlock Text="{Binding RenewalSummary}" FontSize="22" FontWeight="SemiBold" Foreground="#1D5C69" Margin="0,8,0,0" /></StackPanel></Border>
-          <Border Background="#EEF6EE" CornerRadius="9" Padding="18" Margin="0,0,10,0"><StackPanel><TextBlock Text="{Binding HealthLabel}" FontSize="10" Foreground="#477A4B" FontWeight="SemiBold" /><TextBlock Text="{Binding ReadyToOperateText}" FontSize="18" FontWeight="SemiBold" Foreground="#306436" Margin="0,8,0,0" /></StackPanel></Border>
-          <Border Background="#FFF5E7" CornerRadius="9" Padding="18"><StackPanel><TextBlock Text="{Binding ScheduledTaskLabel}" FontSize="10" Foreground="#936A35" FontWeight="SemiBold" /><TextBlock Text="{Binding VerifyInSystemText}" FontSize="18" FontWeight="SemiBold" Foreground="#7E5B2F" Margin="0,8,0,0" /></StackPanel></Border>
-        </UniformGrid>
-        <Border Grid.Row="1" Background="White" BorderBrush="#DCE4EC" BorderThickness="1" CornerRadius="10" Padding="18">
-          <DockPanel>
-            <Grid DockPanel.Dock="Top" Margin="0,0,0,12">
-              <TextBlock Text="{Binding RenewalsLoadedText}" FontSize="18" FontWeight="SemiBold" Foreground="#172B4D" />
-              <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Content="{Binding RenewText}" Click="RenewClick" IsEnabled="{Binding CanMutateSelectedRenewal}" />
-                <Button Content="{Binding ForceText}" Click="ForceRenewClick" IsEnabled="{Binding CanMutateSelectedRenewal}" />
-                <Button Content="{Binding CancelText}" Click="CancelClick" IsEnabled="{Binding CanMutateSelectedRenewal}" />
-                <Button Content="{Binding RevokeText}" Click="RevokeClick" IsEnabled="{Binding CanMutateSelectedRenewal}" />
-                <Button Content="{Binding NewCertificateActionText}" Click="NewCertificateClick" Background="{DynamicResource AccentBrush}" Foreground="White" BorderThickness="0" />
-              </StackPanel>
-            </Grid>
-            <Grid DockPanel.Dock="Top" Margin="0,0,0,12">
-              <TextBlock Text="{Binding FilterRenewalsText}" VerticalAlignment="Center" Foreground="{DynamicResource MutedBrush}" />
-              <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Width="260" HorizontalAlignment="Right" Padding="8" AutomationProperties.Name="Filtrar renovações" />
-            </Grid>
-            <DataGrid x:Name="RenewalsGrid" ItemsSource="{Binding FilteredRenewals}" SelectedItem="{Binding SelectedRenewal}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" GridLinesVisibility="Horizontal" BorderThickness="0" RowHeight="46" CanUserAddRows="False">
-              <DataGrid.Columns>
-                <DataGridTextColumn Header="Nome amigável" Binding="{Binding FriendlyName}" Width="1.2*" />
-                <DataGridTextColumn Header="Domínios" Binding="{Binding Domains}" Width="2*" />
-                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="*" />
-                <DataGridTextColumn Header="Diagnóstico" Binding="{Binding Diagnostics}" Width="1.5*" />
-                <DataGridCheckBoxColumn Header="Editável" Binding="{Binding IsEditable}" Width="80" />
-              </DataGrid.Columns>
-            </DataGrid>
-          </DockPanel>
-        </Border>
-      </Grid>
-      <Border Grid.Row="2" Visibility="{Binding IsContextPage, Converter={StaticResource BoolToVisibility}}" Background="White" BorderBrush="#DCE4EC" BorderThickness="1" CornerRadius="10" Padding="28">
-        <StackPanel VerticalAlignment="Top">
-          <TextBlock Text="{Binding PageTitle}" FontSize="24" FontWeight="SemiBold" Foreground="#172B4D" />
-          <TextBlock Text="{Binding PageDescription}" TextWrapping="Wrap" Foreground="{DynamicResource MutedBrush}" Margin="0,8,0,22" />
-          <Button Content="{Binding ContextActionText}" Click="ContextActionClick" Visibility="{Binding HasContextAction, Converter={StaticResource BoolToVisibility}}" HorizontalAlignment="Left" Padding="16,9" />
-          <Border Background="#F6F8FB" CornerRadius="8" Padding="16" Margin="0,20,0,0">
-            <StackPanel>
-              <TextBlock Text="{Binding StatusLabel}" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource MutedBrush}" />
-              <TextBlock Text="{Binding Status}" TextWrapping="Wrap" Foreground="#243B53" Margin="0,6,0,0" />
+        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+          <Border Background="{DynamicResource MutedBackground}"
+                  CornerRadius="{DynamicResource RadiusSmall}"
+                  Padding="2" Margin="0,0,10,0">
+            <StackPanel Orientation="Horizontal">
+              <ToggleButton Content="PT" Style="{StaticResource PillToggle}"
+                            IsChecked="{Binding Culture.IsPortuguese, Mode=OneWay}"
+                            Command="{Binding SetPortugueseCommand}"
+                            AutomationProperties.Name="Português (Brasil)" />
+              <ToggleButton Content="EN" Style="{StaticResource PillToggle}"
+                            IsChecked="{Binding Culture.IsEnglish, Mode=OneWay}"
+                            Command="{Binding SetEnglishCommand}"
+                            AutomationProperties.Name="English" />
             </StackPanel>
           </Border>
+
+          <Button Content="◐" Style="{StaticResource IconButton}"
+                  Margin="0,0,10,0"
+                  Command="{Binding ToggleThemeCommand}"
+                  ToolTip="{Binding Culture[ToggleTheme]}"
+                  AutomationProperties.Name="{Binding Culture[ToggleTheme]}" />
+
+          <Button Content="{Binding Culture[CancelOperation]}"
+                  Style="{StaticResource SecondaryButton}"
+                  Margin="0,0,8,0"
+                  Command="{Binding CancelOperationCommand}"
+                  ToolTip="{Binding Culture[CancelOperationTooltip]}" />
+
+          <Button Content="{Binding Culture[Download]}"
+                  Style="{StaticResource SecondaryButton}"
+                  Margin="0,0,8,0"
+                  Command="{Binding DownloadCommand}"
+                  ToolTip="{Binding Culture[DownloadTooltip]}" />
+
+          <Button Content="{Binding Culture[Update]}"
+                  Style="{StaticResource PrimaryButton}"
+                  Command="{Binding RefreshCommand}"
+                  ToolTip="{Binding Culture[UpdateTooltip]}" />
         </StackPanel>
-      </Border>
+      </Grid>
+
+      <views:ActiveInstallationBar Grid.Row="1" Margin="0,0,0,18" />
+
+      <Grid Grid.Row="2">
+        <views:HomePage Visibility="{Binding IsHome, Converter={StaticResource BoolToVisibility}}" />
+        <views:RenewalsPage Visibility="{Binding IsRenewals, Converter={StaticResource BoolToVisibility}}" />
+        <views:NewCertificatePage Visibility="{Binding IsNewCertificate, Converter={StaticResource BoolToVisibility}}" />
+        <views:InstallationPage Visibility="{Binding IsInstallation, Converter={StaticResource BoolToVisibility}}" />
+        <views:SystemPage Visibility="{Binding IsSystem, Converter={StaticResource BoolToVisibility}}" />
+        <views:ActivityPage Visibility="{Binding IsLogs, Converter={StaticResource BoolToVisibility}}" />
+        <views:SettingsPage Visibility="{Binding IsSettings, Converter={StaticResource BoolToVisibility}}" />
+        <views:AboutPage Visibility="{Binding IsAbout, Converter={StaticResource BoolToVisibility}}" />
+      </Grid>
     </Grid>
   </Grid>
 </Window>

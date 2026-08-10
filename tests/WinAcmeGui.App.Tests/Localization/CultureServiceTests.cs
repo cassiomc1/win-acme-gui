@@ -1,3 +1,4 @@
+using System.Globalization;
 using FluentAssertions;
 using WinAcmeGui.App.Localization;
 
@@ -34,5 +35,76 @@ public sealed class CultureServiceTests
             service.SetCulture("en-US");
             service[key].Should().NotBeNullOrWhiteSpace();
         }
+    }
+
+    [Fact]
+    public void An_unknown_key_returns_itself_so_a_gap_is_visible_instead_of_fatal()
+    {
+        var service = new CultureService();
+        service["NoSuchKey"].Should().Be("NoSuchKey");
+    }
+
+    [Fact]
+    public void Switching_language_raises_the_indexer_notification_that_bindings_listen_to()
+    {
+        var service = new CultureService();
+        service.SetCulture("pt-BR");
+        var raised = new List<string?>();
+        var cultureChanged = 0;
+        service.PropertyChanged += (_, args) => raised.Add(args.PropertyName);
+        service.CultureChanged += (_, _) => cultureChanged++;
+
+        service.SetCulture("en-US");
+
+        raised.Should().Contain("Item[]");
+        raised.Should().Contain(nameof(CultureService.CultureName));
+        cultureChanged.Should().Be(1);
+    }
+
+    [Fact]
+    public void Re_selecting_the_active_language_does_not_notify()
+    {
+        var service = new CultureService();
+        service.SetCulture("en-US");
+        var raised = 0;
+        service.PropertyChanged += (_, _) => raised++;
+
+        service.SetCulture("en-US");
+
+        raised.Should().Be(0);
+    }
+
+    [Fact]
+    public void Format_substitutes_positional_arguments()
+    {
+        var service = new CultureService();
+        service.SetCulture("en-US");
+
+        service.Format("DownloadCompletedMessage", "2.2.9", @"C:\win-acme")
+            .Should().Contain("2.2.9").And.Contain(@"C:\win-acme");
+    }
+
+    [Fact]
+    public void IsPortuguese_and_IsEnglish_track_the_active_language()
+    {
+        var service = new CultureService();
+
+        service.SetCulture("pt-BR");
+        service.IsPortuguese.Should().BeTrue();
+        service.IsEnglish.Should().BeFalse();
+
+        service.SetCulture("en-US");
+        service.IsPortuguese.Should().BeFalse();
+        service.IsEnglish.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Selecting_pt_br_replaces_a_pt_pt_initial_culture()
+    {
+        var service = new CultureService(CultureInfo.GetCultureInfo("pt-PT"));
+
+        service.SetCulture("pt-BR");
+
+        service.Current.Name.Should().Be("pt-BR");
     }
 }

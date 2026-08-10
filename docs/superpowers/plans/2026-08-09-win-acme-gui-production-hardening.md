@@ -1,5 +1,7 @@
 # win-acme GUI Production Hardening Implementation Plan
 
+**Status:** Completed in merged PR #1 (`81a1e46`). The repository CI and Windows acceptance workflow passed the solution tests, WPF/worker build, CI package and hash smoke test on `windows-latest`. This does not certify a full Windows 10/11/Server matrix or real UAC, IIS, Scheduled Tasks, certificate-store and staging-lifecycle acceptance.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Correct the reviewed production blockers and deliver a safe, testable portable win-acme administration GUI with honest Windows validation boundaries.

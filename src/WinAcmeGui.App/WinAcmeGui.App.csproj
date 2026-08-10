@@ -9,6 +9,11 @@
     <TargetFramework>net8.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
   </PropertyGroup>
+  <!--
+    Off Windows the project still builds as a library so the presentation layer (view models,
+    localization, commands) stays covered by the cross-platform test suite. Only files that touch
+    WPF types directly are excluded.
+  -->
   <PropertyGroup Condition="!$([MSBuild]::IsOSPlatform('windows'))">
     <TargetFramework>net8.0</TargetFramework>
     <OutputType>Library</OutputType>
@@ -17,11 +22,15 @@
   </PropertyGroup>
   <ItemGroup Condition="!$([MSBuild]::IsOSPlatform('windows'))">
     <Compile Remove="App.xaml.cs" />
-    <Compile Remove="Shell/MainWindow.xaml.cs" />
-    <Compile Remove="Shell/MainWindowViewModel.cs" />
-    <Compile Remove="Features/NewCertificateWindow.xaml.cs" />
+    <Compile Remove="Shell/**/*.xaml.cs" />
+    <Compile Remove="Features/**/*.xaml.cs" />
+    <Compile Remove="Views/**/*.xaml.cs" />
+    <Compile Remove="Windows/**/*.cs" />
     <None Include="App.xaml" />
-    <None Include="Shell/MainWindow.xaml" />
+    <None Include="Theme/**/*.xaml" />
+    <None Include="Shell/**/*.xaml" />
+    <None Include="Views/**/*.xaml" />
+    <None Include="Features/**/*.xaml" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../WinAcmeGui.Domain/WinAcmeGui.Domain.csproj" AdditionalProperties="TargetFramework=net8.0" />

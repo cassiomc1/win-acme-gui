@@ -1,0 +1,88 @@
+<UserControl x:Class="WinAcmeGui.App.Views.SettingsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <StackPanel>
+      <Border Style="{StaticResource Card}">
+        <StackPanel>
+          <TextBlock Text="{Binding Culture[Appearance]}" Style="{StaticResource SubtitleText}" />
+          <TextBlock Text="{Binding Culture[AppearanceHint]}"
+                     Style="{StaticResource SecondaryText}"
+                     FontSize="{DynamicResource FontSizeSmall}"
+                     Margin="0,4,0,0" />
+
+          <Grid Margin="0,18,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="180" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="{Binding Culture[Language]}" Style="{StaticResource BodyText}" VerticalAlignment="Center" />
+            <Border Grid.Column="1"
+                    Background="{DynamicResource MutedBackground}"
+                    CornerRadius="{DynamicResource RadiusSmall}"
+                    Padding="2">
+              <StackPanel Orientation="Horizontal">
+                <ToggleButton Content="Português (Brasil)"
+                              Style="{StaticResource PillToggle}"
+                              MinWidth="140"
+                              IsChecked="{Binding Culture.IsPortuguese, Mode=OneWay}"
+                              Command="{Binding SetPortugueseCommand}" />
+                <ToggleButton Content="English"
+                              Style="{StaticResource PillToggle}"
+                              MinWidth="90"
+                              IsChecked="{Binding Culture.IsEnglish, Mode=OneWay}"
+                              Command="{Binding SetEnglishCommand}" />
+              </StackPanel>
+            </Border>
+          </Grid>
+
+          <Grid Margin="0,12,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="180" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="{Binding Culture[Theme]}" Style="{StaticResource BodyText}" VerticalAlignment="Center" />
+            <Border Grid.Column="1"
+                    Background="{DynamicResource MutedBackground}"
+                    CornerRadius="{DynamicResource RadiusSmall}"
+                    Padding="2">
+              <StackPanel Orientation="Horizontal">
+                <!-- Both toggles drive the same command; IsChecked mirrors the current theme. -->
+                <ToggleButton Content="{Binding Culture[ThemeLight]}"
+                              Style="{StaticResource PillToggle}"
+                              MinWidth="90"
+                              IsChecked="{Binding IsDarkTheme, Mode=OneWay, Converter={StaticResource InverseBool}}"
+                              Command="{Binding ToggleThemeCommand}" />
+                <ToggleButton Content="{Binding Culture[ThemeDark]}"
+                              Style="{StaticResource PillToggle}"
+                              MinWidth="90"
+                              IsChecked="{Binding IsDarkTheme, Mode=OneWay}"
+                              Command="{Binding ToggleThemeCommand}" />
+              </StackPanel>
+            </Border>
+          </Grid>
+        </StackPanel>
+      </Border>
+
+      <!-- Honest boundary: the backup-first writer exists, but no editor is exposed yet. -->
+      <Border Style="{StaticResource Card}" Margin="0,14,0,0">
+        <StackPanel>
+          <TextBlock Text="{Binding Culture[WinAcmeSettings]}" Style="{StaticResource SubtitleText}" />
+          <TextBlock Text="{Binding Culture[WinAcmeSettingsHint]}"
+                     Style="{StaticResource SecondaryText}"
+                     Margin="0,6,0,0" />
+          <Border Style="{StaticResource Badge}"
+                  Margin="0,12,0,0"
+                  Background="{DynamicResource StatusNeutralSoftBrush}">
+            <TextBlock Text="{Binding Culture[NotExposedYet]}"
+                       Style="{StaticResource BadgeText}"
+                       Foreground="{DynamicResource StatusNeutralBrush}" />
+          </Border>
+          <TextBlock Text="{Binding Culture[SettingsFile]}" Style="{StaticResource CaptionText}" Margin="0,16,0,0" />
+          <TextBlock Text="{Binding SettingsPath}" Style="{StaticResource PathText}" Margin="0,4,0,0"
+                     ToolTip="{Binding SettingsPath}" />
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

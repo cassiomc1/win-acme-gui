@@ -1,0 +1,148 @@
+<Window x:Class="WinAcmeGui.App.Features.CertificateWizardWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Width="720" Height="760" MinWidth="620" MinHeight="600"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource WindowBackground}"
+        Title="{Binding Culture[NewCertificate]}">
+  <DockPanel Margin="24">
+    <!-- Footer stays pinned so the actions are reachable regardless of scroll position. -->
+    <Border DockPanel.Dock="Bottom" Margin="0,16,0,0">
+      <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+        <Button Content="{Binding Culture[PreviewAction]}"
+                Style="{StaticResource SecondaryButton}"
+                Margin="0,0,8,0"
+                MinWidth="120"
+                Command="{Binding PreviewCommand}" />
+        <Button Content="{Binding Culture[CancelOperation]}"
+                Style="{StaticResource SecondaryButton}"
+                Margin="0,0,8,0"
+                MinWidth="140"
+                Command="{Binding CancelCommand}" />
+        <Button Content="{Binding Culture[Execute]}"
+                Style="{StaticResource PrimaryButton}"
+                MinWidth="120"
+                Command="{Binding ExecuteCommand}" />
+      </StackPanel>
+    </Border>
+
+    <ProgressBar DockPanel.Dock="Bottom"
+                 Style="{StaticResource BusyBar}"
+                 Margin="0,12,0,0"
+                 Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibility}}" />
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+      <StackPanel>
+        <TextBlock Text="{Binding Culture[CertificateTitle]}" Style="{StaticResource TitleText}" />
+        <TextBlock Text="{Binding Culture[CertificateInstructions]}"
+                   Style="{StaticResource SecondaryText}"
+                   Margin="0,6,0,0" />
+
+        <TextBlock Text="{Binding Culture[DomainsLabel]}" Style="{StaticResource CaptionText}" Margin="0,20,0,0" />
+        <TextBox Margin="0,6,0,0"
+                 Tag="{Binding Culture[DomainsPlaceholder]}"
+                 Text="{Binding Domains, UpdateSourceTrigger=PropertyChanged}"
+                 AutomationProperties.Name="{Binding Culture[DomainsLabel]}" />
+
+        <TextBlock Text="{Binding Culture[EmailAddress]}" Style="{StaticResource CaptionText}" Margin="0,16,0,0" />
+        <TextBox Margin="0,6,0,0"
+                 Tag="{Binding Culture[EmailPlaceholder]}"
+                 Text="{Binding EmailAddress, UpdateSourceTrigger=PropertyChanged}"
+                 AutomationProperties.Name="{Binding Culture[EmailAddress]}" />
+
+        <Grid Margin="0,16,0,0">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+          </Grid.ColumnDefinitions>
+          <StackPanel Grid.Column="0" Margin="0,0,8,0">
+            <TextBlock Text="{Binding Culture[Validation]}" Style="{StaticResource CaptionText}" />
+            <ComboBox Margin="0,6,0,0"
+                      ItemsSource="{Binding ValidationOptions}"
+                      SelectedItem="{Binding Validation, Mode=TwoWay}"
+                      DisplayMemberPath="Label"
+                      AutomationProperties.Name="{Binding Culture[Validation]}" />
+          </StackPanel>
+          <StackPanel Grid.Column="1" Margin="8,0,0,0">
+            <TextBlock Text="{Binding Culture[PrivateKey]}" Style="{StaticResource CaptionText}" />
+            <ComboBox Margin="0,6,0,0"
+                      ItemsSource="{Binding KeyTypeOptions}"
+                      SelectedItem="{Binding KeyType, Mode=TwoWay}"
+                      DisplayMemberPath="Label"
+                      AutomationProperties.Name="{Binding Culture[PrivateKey]}" />
+          </StackPanel>
+        </Grid>
+
+        <TextBlock Text="{Binding Culture[Storage]}" Style="{StaticResource CaptionText}" Margin="0,16,0,0" />
+        <ComboBox Margin="0,6,0,0"
+                  ItemsSource="{Binding StoreOptions}"
+                  SelectedItem="{Binding Store, Mode=TwoWay}"
+                  DisplayMemberPath="Label"
+                  AutomationProperties.Name="{Binding Culture[Storage]}" />
+
+        <!-- Only PEM/PFX output needs a path, so this pair is bound to StoragePathVisible. -->
+        <StackPanel Visibility="{Binding StoragePathVisible, Converter={StaticResource BoolToVisibility}}">
+          <TextBlock Text="{Binding Culture[StoragePath]}" Style="{StaticResource CaptionText}" Margin="0,16,0,0" />
+          <TextBox Margin="0,6,0,0"
+                   Tag="{Binding Culture[StoragePathPlaceholder]}"
+                   Text="{Binding StoragePath, UpdateSourceTrigger=PropertyChanged}"
+                   AutomationProperties.Name="{Binding Culture[StoragePath]}" />
+        </StackPanel>
+
+        <CheckBox Margin="0,20,0,0"
+                  IsChecked="{Binding AcceptTerms, Mode=TwoWay}"
+                  Content="{Binding Culture[AcceptTerms]}" />
+        <CheckBox Margin="0,12,0,0"
+                  IsChecked="{Binding UseStaging, Mode=TwoWay}"
+                  Content="{Binding Culture[UseStaging]}" />
+        <TextBlock Text="{Binding Culture[UseStagingHint]}"
+                   Style="{StaticResource SecondaryText}"
+                   FontSize="{DynamicResource FontSizeSmall}"
+                   Margin="28,4,0,0" />
+
+        <!-- Validation errors, exact command line and captured output. -->
+        <Border Style="{StaticResource Card}"
+                Background="{DynamicResource StatusDangerSoftBrush}"
+                BorderBrush="{DynamicResource StatusDangerBrush}"
+                Margin="0,18,0,0"
+                Padding="14"
+                Visibility="{Binding HasValidationErrors, Converter={StaticResource BoolToVisibility}}">
+          <StackPanel>
+            <TextBlock Text="{Binding Culture[ValidationErrors]}"
+                       Style="{StaticResource BadgeText}"
+                       Foreground="{DynamicResource StatusDangerBrush}" />
+            <ItemsControl ItemsSource="{Binding ValidationErrors}" Margin="0,8,0,0">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <TextBlock Text="{Binding}"
+                             Style="{StaticResource BodyText}"
+                             FontSize="{DynamicResource FontSizeSmall}"
+                             Foreground="{DynamicResource StatusDangerBrush}"
+                             Margin="0,0,0,4" />
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Border>
+
+        <TextBlock Text="{Binding Culture[CommandPreview]}" Style="{StaticResource CaptionText}" Margin="0,18,0,0" />
+        <Border Style="{StaticResource SoftCard}" Margin="0,6,0,0" Padding="14">
+          <TextBlock Text="{Binding Preview}" Style="{StaticResource MonoText}" />
+        </Border>
+
+        <StackPanel Visibility="{Binding HasOutput, Converter={StaticResource BoolToVisibility}}">
+          <TextBlock Text="{Binding Culture[OperationOutput]}" Style="{StaticResource CaptionText}" Margin="0,18,0,0" />
+          <Border Style="{StaticResource SoftCard}" Margin="0,6,0,0" Padding="14">
+            <ItemsControl ItemsSource="{Binding Output}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <TextBlock Text="{Binding}" Style="{StaticResource MonoText}" />
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </Border>
+        </StackPanel>
+      </StackPanel>
+    </ScrollViewer>
+  </DockPanel>
+</Window>

@@ -1,0 +1,27 @@
+<UserControl x:Class="WinAcmeGui.App.Views.EmptyState"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Name="Root">
+  <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="24">
+    <TextBlock Text="{Binding Glyph, ElementName=Root}"
+               FontSize="34"
+               HorizontalAlignment="Center"
+               Foreground="{DynamicResource ControlDisabledForeground}" />
+    <TextBlock Text="{Binding Title, ElementName=Root}"
+               Style="{StaticResource SubtitleText}"
+               HorizontalAlignment="Center"
+               TextAlignment="Center"
+               Margin="0,12,0,0" />
+    <TextBlock Text="{Binding Hint, ElementName=Root}"
+               Style="{StaticResource SecondaryText}"
+               HorizontalAlignment="Center"
+               TextAlignment="Center"
+               MaxWidth="420"
+               Margin="0,6,0,0"
+               Visibility="{Binding Hint, ElementName=Root, Converter={StaticResource StringToVisibility}}" />
+    <!-- Optional call to action; ActionContent is a separate property because UserControl.Content is the layout itself. -->
+    <ContentPresenter Content="{Binding ActionContent, ElementName=Root}"
+                      HorizontalAlignment="Center"
+                      Margin="0,16,0,0" />
+  </StackPanel>
+</UserControl>

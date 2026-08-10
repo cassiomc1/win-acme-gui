@@ -1,0 +1,144 @@
+<UserControl x:Class="WinAcmeGui.App.Views.RenewalsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:WinAcmeGui.App.Views"
+             xmlns:win="clr-namespace:WinAcmeGui.App.Windows">
+  <UserControl.Resources>
+    <!-- DataGrid columns live outside the visual tree, so headers reach the page context through this proxy. -->
+    <win:BindingProxy x:Key="PageContext" Data="{Binding}" />
+  </UserControl.Resources>
+  <Border Style="{StaticResource Card}">
+    <DockPanel>
+      <!-- Action row. Mutating buttons stay disabled until an editable row is selected. -->
+      <Grid DockPanel.Dock="Top" Margin="0,0,0,14">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+          <TextBlock Text="{Binding Culture[RenewalsLoaded]}" Style="{StaticResource SubtitleText}" />
+          <TextBlock Text="{Binding RenewalSummary}"
+                     Style="{StaticResource SecondaryText}"
+                     FontSize="{DynamicResource FontSizeSmall}"
+                     Margin="0,3,0,0" />
+        </StackPanel>
+        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+          <Button Content="{Binding Culture[Renew]}"
+                  Style="{StaticResource SecondaryButton}"
+                  Margin="0,0,8,0"
+                  Command="{Binding RenewCommand}"
+                  ToolTip="{Binding Culture[RenewTooltip]}" />
+          <Button Content="{Binding Culture[Force]}"
+                  Style="{StaticResource SecondaryButton}"
+                  Margin="0,0,8,0"
+                  Command="{Binding ForceRenewCommand}"
+                  ToolTip="{Binding Culture[ForceTooltip]}" />
+          <Button Content="{Binding Culture[Cancel]}"
+                  Style="{StaticResource DangerButton}"
+                  Margin="0,0,8,0"
+                  Command="{Binding CancelRenewalCommand}"
+                  ToolTip="{Binding Culture[CancelTooltip]}" />
+          <Button Content="{Binding Culture[Revoke]}"
+                  Style="{StaticResource DangerButton}"
+                  Margin="0,0,14,0"
+                  Command="{Binding RevokeRenewalCommand}"
+                  ToolTip="{Binding Culture[RevokeTooltip]}" />
+          <Button Content="{Binding Culture[NewCertificateAction]}"
+                  Style="{StaticResource PrimaryButton}"
+                  Command="{Binding OpenCertificateWizardCommand}" />
+        </StackPanel>
+      </Grid>
+
+      <!-- Filter row: free text plus an exact status choice. -->
+      <Grid DockPanel.Dock="Top" Margin="0,0,0,14">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <TextBox Grid.Column="0"
+                 MaxWidth="380"
+                 HorizontalAlignment="Left"
+                 Tag="{Binding Culture[SearchPlaceholder]}"
+                 Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                 AutomationProperties.Name="{Binding Culture[FilterRenewals]}" />
+        <ComboBox Grid.Column="1"
+                  Width="190"
+                  Margin="10,0,0,0"
+                  ItemsSource="{Binding StatusFilters}"
+                  SelectedItem="{Binding SelectedStatusFilter, Mode=TwoWay}"
+                  DisplayMemberPath="Label"
+                  AutomationProperties.Name="{Binding Culture[StatusColumn]}" />
+        <Button Grid.Column="2"
+                Content="{Binding Culture[ClearFilters]}"
+                Style="{StaticResource GhostButton}"
+                Margin="8,0,0,0"
+                Command="{Binding ClearFiltersCommand}" />
+      </Grid>
+
+      <Grid>
+        <DataGrid x:Name="RenewalsGrid"
+                  Style="{StaticResource FlatDataGrid}"
+                  ItemsSource="{Binding FilteredRenewals}"
+                  SelectedItem="{Binding SelectedRenewal, Mode=TwoWay}"
+                  Visibility="{Binding HasFilteredRenewals, Converter={StaticResource BoolToVisibility}}">
+          <DataGrid.Columns>
+            <DataGridTextColumn Header="{Binding Data.Culture[FriendlyName], Source={StaticResource PageContext}}"
+                                Binding="{Binding FriendlyName}" Width="1.3*" />
+            <DataGridTextColumn Header="{Binding Data.Culture[Domains], Source={StaticResource PageContext}}"
+                                Binding="{Binding Domains}" Width="2*" />
+            <!-- Status is a coloured badge rather than raw enum text. -->
+            <DataGridTemplateColumn Header="{Binding Data.Culture[StatusColumn], Source={StaticResource PageContext}}"
+                                    Width="150" SortMemberPath="Status">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <Border Style="{StaticResource Badge}"
+                          Background="{Binding StatusBrushKey, Converter={StaticResource KeyToSoftBrush}}">
+                    <TextBlock Text="{Binding StatusText}"
+                               Style="{StaticResource BadgeText}"
+                               Foreground="{Binding StatusBrushKey, Converter={StaticResource KeyToBrush}}" />
+                  </Border>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+            <DataGridTextColumn Header="{Binding Data.Culture[Diagnostics], Source={StaticResource PageContext}}"
+                                Binding="{Binding Diagnostics}" Width="1.6*" />
+            <DataGridTemplateColumn Header="{Binding Data.Culture[Editable], Source={StaticResource PageContext}}"
+                                    Width="90" SortMemberPath="IsEditable">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <!-- Check for editable, dash for read-only: read-only rows can be inspected but not operated. -->
+                  <Grid HorizontalAlignment="Center">
+                    <TextBlock Text="✓"
+                               Foreground="{DynamicResource StatusHealthyBrush}"
+                               Visibility="{Binding IsEditable, Converter={StaticResource BoolToVisibility}}" />
+                    <TextBlock Text="—"
+                               Foreground="{DynamicResource StatusNeutralBrush}"
+                               ToolTip="{Binding Diagnostics}"
+                               Visibility="{Binding IsEditable, Converter={StaticResource InverseBoolToVisibility}}" />
+                  </Grid>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+          </DataGrid.Columns>
+        </DataGrid>
+
+        <views:EmptyState Glyph="≡"
+                          Title="{Binding Culture[NoRenewalsTitle]}"
+                          Hint="{Binding Culture[NoRenewalsHint]}"
+                          Visibility="{Binding ShowNoRenewals, Converter={StaticResource BoolToVisibility}}" />
+
+        <views:EmptyState Glyph="⌕"
+                          Title="{Binding Culture[NoMatchesTitle]}"
+                          Hint="{Binding Culture[NoMatchesHint]}"
+                          Visibility="{Binding ShowNoMatches, Converter={StaticResource BoolToVisibility}}">
+          <views:EmptyState.ActionContent>
+            <Button Content="{Binding Culture[ClearFilters]}"
+                    Style="{StaticResource SecondaryButton}"
+                    Command="{Binding ClearFiltersCommand}" />
+          </views:EmptyState.ActionContent>
+        </views:EmptyState>
+      </Grid>
+    </DockPanel>
+  </Border>
+</UserControl>

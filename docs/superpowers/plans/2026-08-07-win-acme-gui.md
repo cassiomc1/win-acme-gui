@@ -1,5 +1,7 @@
 # win-acme GUI Implementation Plan
 
+> **Status:** Historical and superseded. This original 14-task plan describes the broader target and intentionally retains its unchecked design steps; it is not a current implementation tracker. See [`README.md`](../../../README.md), [`docs/compatibility.md`](../../compatibility.md) and the [completed production hardening record](2026-08-09-win-acme-gui-production-hardening.md) for the current boundary and validation evidence.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build a complete, bilingual, portable Windows desktop administration interface that discovers existing win-acme installations and safely manages their full certificate lifecycle through the official engine.

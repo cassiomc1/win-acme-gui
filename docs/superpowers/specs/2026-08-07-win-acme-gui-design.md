@@ -4,6 +4,8 @@
 **Status:** Approved  
 **Product:** Portable Windows desktop interface for win-acme
 
+> **Implementation note (2026-08-09):** This document is the approved target specification, not a list of capabilities currently exposed by the shipped shell. The delivered boundary is recorded in [`README.md`](../../../README.md), [`docs/compatibility.md`](../../compatibility.md) and the [production hardening implementation record](../plans/2026-08-09-win-acme-gui-production-hardening.md). IIS controls, DNS-plugin setup, renewal edit/clone, scheduled-task management, settings editing/restoration, browsing of original win-acme logs and diagnostic ZIP export remain roadmap items; the GUI-only light/dark appearance toggle is already exposed.
+
 ## 1. Purpose
 
 Build a complete graphical administration interface for [win-acme](https://www.win-acme.com/) that automatically discovers existing installations and configuration, loads current renewals without modifying them, and exposes the supported certificate lifecycle through safe guided workflows.

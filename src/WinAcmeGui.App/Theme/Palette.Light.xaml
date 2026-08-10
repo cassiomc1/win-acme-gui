@@ -1,0 +1,54 @@
+<!--
+  Light palette. Every visual value the app uses is declared here and consumed with DynamicResource,
+  so swapping this dictionary for Palette.Dark.xaml re-themes the whole shell at runtime.
+-->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- Surfaces -->
+  <SolidColorBrush x:Key="WindowBackground" Color="#F4F6FA" />
+  <SolidColorBrush x:Key="CardBackground" Color="#FFFFFF" />
+  <SolidColorBrush x:Key="CardBackgroundAlt" Color="#F8FAFC" />
+  <SolidColorBrush x:Key="MutedBackground" Color="#EEF2F7" />
+  <SolidColorBrush x:Key="HoverBackground" Color="#E7EDF5" />
+  <SolidColorBrush x:Key="SidebarBackground" Color="#101D2E" />
+  <SolidColorBrush x:Key="SidebarHoverBackground" Color="#1B2C42" />
+  <SolidColorBrush x:Key="SidebarSelectedBackground" Color="#20364F" />
+
+  <!-- Text -->
+  <SolidColorBrush x:Key="TextPrimaryBrush" Color="#16233A" />
+  <SolidColorBrush x:Key="TextSecondaryBrush" Color="#5A6B84" />
+  <SolidColorBrush x:Key="MutedBrush" Color="#5A6B84" />
+  <SolidColorBrush x:Key="TextOnAccentBrush" Color="#FFFFFF" />
+  <SolidColorBrush x:Key="SidebarTextBrush" Color="#D8E2EE" />
+  <SolidColorBrush x:Key="SidebarMutedBrush" Color="#8FA3BC" />
+
+  <!-- Lines and focus -->
+  <SolidColorBrush x:Key="BorderBrushSubtle" Color="#E1E7F0" />
+  <SolidColorBrush x:Key="BorderBrushStrong" Color="#C9D4E2" />
+  <SolidColorBrush x:Key="FocusBrush" Color="#17697B" />
+
+  <!-- Accent -->
+  <SolidColorBrush x:Key="AccentBrush" Color="#17697B" />
+  <SolidColorBrush x:Key="AccentHoverBrush" Color="#1E8299" />
+  <SolidColorBrush x:Key="AccentPressedBrush" Color="#125562" />
+  <SolidColorBrush x:Key="AccentSoftBrush" Color="#E4F1F4" />
+
+  <!-- Status -->
+  <SolidColorBrush x:Key="StatusHealthyBrush" Color="#2E7D4F" />
+  <SolidColorBrush x:Key="StatusHealthySoftBrush" Color="#E7F3EB" />
+  <SolidColorBrush x:Key="StatusWarningBrush" Color="#A96E14" />
+  <SolidColorBrush x:Key="StatusWarningSoftBrush" Color="#FBF1E1" />
+  <SolidColorBrush x:Key="StatusDangerBrush" Color="#B23A3A" />
+  <SolidColorBrush x:Key="StatusDangerSoftBrush" Color="#FAEAEA" />
+  <SolidColorBrush x:Key="StatusNeutralBrush" Color="#64748B" />
+  <SolidColorBrush x:Key="StatusNeutralSoftBrush" Color="#EDF1F6" />
+
+  <!-- Controls -->
+  <SolidColorBrush x:Key="ControlBackground" Color="#FFFFFF" />
+  <SolidColorBrush x:Key="ControlDisabledBackground" Color="#F1F4F8" />
+  <SolidColorBrush x:Key="ControlDisabledForeground" Color="#9AA7B8" />
+  <SolidColorBrush x:Key="GridHeaderBackground" Color="#F1F5F9" />
+  <SolidColorBrush x:Key="GridLineBrush" Color="#E8EDF4" />
+  <SolidColorBrush x:Key="GridSelectedBackground" Color="#E4F1F4" />
+</ResourceDictionary>

@@ -1,0 +1,62 @@
+<UserControl x:Class="WinAcmeGui.App.Views.SystemPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Border Style="{StaticResource Card}">
+    <DockPanel>
+      <Grid DockPanel.Dock="Top" Margin="0,0,0,16">
+        <TextBlock Text="{Binding Culture[SessionState]}" Style="{StaticResource SubtitleText}" VerticalAlignment="Center" />
+        <Button Content="{Binding Culture[CopyDetails]}"
+                Style="{StaticResource SecondaryButton}"
+                HorizontalAlignment="Right"
+                Command="{Binding CopySystemDetailsCommand}" />
+      </Grid>
+
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <!-- Two-column fact sheet; the same values the Copy details button puts on the clipboard. -->
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+          </Grid.ColumnDefinitions>
+          <StackPanel Grid.Column="0" Margin="0,0,14,0">
+            <TextBlock Text="{Binding Culture[GuiVersion]}" Style="{StaticResource CaptionText}" />
+            <TextBlock Text="{Binding GuiVersionText}" Style="{StaticResource BodyText}" Margin="0,4,0,0" />
+
+            <TextBlock Text="{Binding Culture[HostPlatform]}" Style="{StaticResource CaptionText}" Margin="0,16,0,0" />
+            <TextBlock Text="{Binding PlatformText}" Style="{StaticResource BodyText}" Margin="0,4,0,0" />
+
+            <TextBlock Text="{Binding Culture[ElevationMode]}" Style="{StaticResource CaptionText}" Margin="0,16,0,0" />
+            <TextBlock Text="{Binding ExecutionModeText}" Style="{StaticResource BodyText}" Margin="0,4,0,0" />
+
+            <TextBlock Text="{Binding Culture[DetectedInstallation]}" Style="{StaticResource CaptionText}" Margin="0,16,0,0" />
+            <TextBlock Text="{Binding ActiveVersion}" Style="{StaticResource BodyText}" Margin="0,4,0,0" />
+          </StackPanel>
+
+          <StackPanel Grid.Column="1">
+            <TextBlock Text="{Binding Culture[EndpointUpper]}" Style="{StaticResource CaptionText}" />
+            <TextBlock Text="{Binding ActiveEndpoint}" Style="{StaticResource PathText}" Margin="0,4,0,0"
+                       ToolTip="{Binding ActiveEndpoint}" />
+            <Border Style="{StaticResource Badge}"
+                    Margin="0,8,0,0"
+                    Background="{Binding EndpointBrushKey, Converter={StaticResource KeyToSoftBrush}}">
+              <TextBlock Text="{Binding EndpointKindText}"
+                         Style="{StaticResource BadgeText}"
+                         Foreground="{Binding EndpointBrushKey, Converter={StaticResource KeyToBrush}}" />
+            </Border>
+
+            <TextBlock Text="{Binding Culture[SettingsFile]}" Style="{StaticResource CaptionText}" Margin="0,16,0,0" />
+            <TextBlock Text="{Binding SettingsPath}" Style="{StaticResource PathText}" Margin="0,4,0,0"
+                       ToolTip="{Binding SettingsPath}" />
+
+            <TextBlock Text="{Binding Culture[ConfigurationPathUpper]}" Style="{StaticResource CaptionText}" Margin="0,16,0,0" />
+            <TextBlock Text="{Binding ActiveConfigurationPath}" Style="{StaticResource PathText}" Margin="0,4,0,0"
+                       ToolTip="{Binding ActiveConfigurationPath}" />
+
+            <TextBlock Text="{Binding Culture[RenewalsLoaded]}" Style="{StaticResource CaptionText}" Margin="0,16,0,0" />
+            <TextBlock Text="{Binding TotalRenewalCount}" Style="{StaticResource BodyText}" Margin="0,4,0,0" />
+          </StackPanel>
+        </Grid>
+      </ScrollViewer>
+    </DockPanel>
+  </Border>
+</UserControl>

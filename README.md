@@ -2,21 +2,31 @@
 
 Portable Windows desktop administration center for [win-acme](https://www.win-acme.com/), built with .NET 8 and WPF.
 
-## What it does
+## Current scope
 
-On startup the GUI checks scheduled/process/PATH/known locations for `wacs.exe`, validates candidates with `wacs.exe --version`, resolves `settings.json` and its effective `ConfigurationPath`, and loads `*.renewal.json` files without modifying them. Multiple installations remain isolated and a manual executable selection is available.
+The current shell provides:
 
-The current desktop shell includes:
-
-- dashboard with active installation, endpoint, configuration path and loaded renewals;
-- renewal search surface with official renew, forced renew, cancel and revoke actions;
-  - guided certificate draft for manual domains, HTTP-01 or TLS-ALPN-01 validation, RSA/EC keys, certificate store/PFX/PEM storage and staging preview;
+- read-only discovery of `wacs.exe` through scheduled tasks, processes, `PATH`, known locations and manual selection;
+- validation with `wacs.exe --version`, effective `settings.json`/`ConfigurationPath` resolution and isolated renewal inventory;
+- search by friendly name, ID, domain or status;
+- normal renewal, forced renewal, cancellation and revocation for editable renewal rows;
+- a manual certificate wizard with HTTP-01 or TLS-ALPN-01 validation, RSA/EC keys, certificate-store/PFX/PEM output and staging preview;
 - Portuguese (Brazil) and English labels;
-- typed, shell-free command execution with secret redaction;
-- backup manifests, diagnostics export and safe ZIP extraction primitives;
-  - an authenticated named-pipe boundary to an allowlisted elevated worker for UAC operations.
+- a GUI-only light/dark theme toggle;
+- shell-free typed command execution, secret redaction, cancellation and an authenticated allowlisted elevated worker on Windows;
+- safe official x64 release download, SHA-256 verification, Authenticode validation on Windows, ZIP preflight and backup primitives.
 
-The GUI does not decrypt win-acme secrets or edit renewal JSON by hand. Existing settings are only written through explicit, backup-first workflows. Generic DNS validation is not exposed because a DNS provider plugin and its credentials must be configured in win-acme first.
+The GUI never edits `*.renewal.json` directly or decrypts win-acme secrets. Unknown, malformed or shared-configuration renewals remain visible and read-only.
+
+### Confirmation and mutation policy
+
+- Normal renewal is started by the explicit Renew action.
+- Forced renewal asks for an additional confirmation.
+- Cancel and Revoke require typing the renewal friendly name; revocation is intended for compromised keys.
+- New certificate creation requires review, acceptance of the Let's Encrypt terms and confirmation before execution.
+- Read-only rows and operations without a valid active installation are disabled or rejected.
+
+The current shell does not expose IIS management, DNS-plugin setup, renewal edit/clone, scheduled-task management, a settings editor/restore screen, a browser for the original win-acme logs or diagnostic ZIP export. Use the official win-acme console for those workflows until they are implemented and validated.
 
 ## Build and test
 
@@ -25,19 +35,22 @@ The core projects and non-visual localization layer can be tested on macOS/Linux
 ```bash
 dotnet restore WinAcmeGui.sln
 dotnet test WinAcmeGui.sln --configuration Release
+dotnet build WinAcmeGui.sln --configuration Release
 ```
 
-The WPF visual project targets `net8.0-windows` on Windows. On non-Windows hosts it compiles its testable non-visual layer so the cross-platform suite remains runnable. WPF execution, real UAC, IIS, Scheduled Tasks and portable-package smoke tests must run on a Windows 10/11 or Windows Server 2016+ x64 machine; this repository does not claim those checks from a macOS/Linux run.
+The WPF visual project targets `net8.0-windows` on Windows. On non-Windows hosts it compiles its testable non-visual layer so the cross-platform suite remains runnable. The GitHub Windows acceptance workflow currently runs on `windows-latest` and checks tests, WPF/worker compilation, unsigned CI packaging and package hashes. It is not a complete Windows 10/11/Server matrix and does not replace real UAC, IIS, Scheduled Tasks, certificate-store or staging-lifecycle acceptance.
 
 ## Portable package on Windows
 
 ```powershell
-pwsh ./scripts/Publish-Portable.ps1
+pwsh ./scripts/Publish-Portable.ps1 -SigningCertificatePath .\release-signing.pfx
 ```
 
-The script runs tests, publishes self-contained `win-x64` GUI and worker binaries, copies bilingual documentation and notices, writes a relative-path SHA-256 manifest, and creates `artifacts/WinAcmeGui-<version>-win-x64.zip`. A production package must be Authenticode-signed with `-SigningCertificatePath`; `-AllowUnsigned` is reserved for CI/dev validation and cannot pass the runtime worker trust boundary. The release downloader accepts only approved HTTPS GitHub hosts, official x64 assets with a SHA-256 digest, and safe ZIP contents.
+The script tests the solution, publishes self-contained `win-x64` GUI and worker binaries, copies the operational documentation and notices, writes a relative-path SHA-256 manifest, and creates `artifacts/WinAcmeGui-<version>-win-x64.zip`.
 
-Use the staging endpoint for first-run certificate acceptance tests. The GUI never silently overwrites an existing win-acme directory or runs a production mutation without confirmation.
+Production packages must be Authenticode-signed with `-SigningCertificatePath` (and optionally `-SigningCertificatePassword`). `-AllowUnsigned` is reserved for CI/development validation and cannot pass the runtime worker trust boundary. The release downloader accepts only approved HTTPS GitHub hosts, official x64 assets with a SHA-256 digest, trusted signed binaries and safe ZIP contents.
+
+Use the staging endpoint for first-run certificate acceptance tests. The GUI never silently overwrites an existing win-acme directory.
 
 ## Documentation
 
@@ -45,6 +58,6 @@ Use the staging endpoint for first-run certificate acceptance tests. The GUI nev
 - [English user guide](docs/user-guide.en-US.md)
 - [Troubleshooting / pt-BR](docs/troubleshooting.pt-BR.md)
 - [Troubleshooting / English](docs/troubleshooting.en-US.md)
-- [Compatibility matrix](docs/compatibility.md)
-- [Design specification](docs/superpowers/specs/2026-08-07-win-acme-gui-design.md)
-- [Implementation plan](docs/superpowers/plans/2026-08-07-win-acme-gui.md)
+- [Compatibility and validation matrix](docs/compatibility.md)
+- [Design specification — target scope](docs/superpowers/specs/2026-08-07-win-acme-gui-design.md)
+- [Production hardening implementation record](docs/superpowers/plans/2026-08-09-win-acme-gui-production-hardening.md)
