@@ -18,7 +18,8 @@ public partial class ConfirmationDialog : Window
         _expectedAnswer = expectedAnswer;
         Title = title;
         MessageText.Text = message;
-        MismatchText.Text = culture["ConfirmationMismatch"];
+        AnswerPrompt.Text = culture["ConfirmationPrompt"];
+        ValidationText.Text = culture["ConfirmationMismatch"];
         ConfirmButton.Content = culture["Confirm"];
         CancelButton.Content = culture["Close"];
         Loaded += (_, _) => AnswerBox.Focus();

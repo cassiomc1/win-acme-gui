@@ -82,6 +82,7 @@ public static partial class LocalizationTable
         new("ConfirmRevokeTitle", "Confirmar revogação", "Confirm revocation"),
         new("ConfirmRevokeMessage", "A revogação é destinada a chaves comprometidas. Digite o nome amigável:",
             "Revocation is intended for compromised keys. Type the friendly name:"),
+        new("ConfirmationPrompt", "Digite exatamente o nome amigável para confirmar:", "Type the exact friendly name to confirm:"),
         new("ConfirmationMismatch", "O nome digitado não confere.", "The typed name does not match."),
         new("OperationRenew", "Renovação", "Renewal"),
         new("OperationForceRenew", "Renovação forçada", "Forced renewal"),

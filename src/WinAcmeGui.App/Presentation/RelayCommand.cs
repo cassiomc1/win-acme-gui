@@ -58,7 +58,19 @@ public sealed class AsyncRelayCommand : ICommand
 
     public bool CanExecute(object? parameter) => !_isExecuting && (_canExecute?.Invoke() ?? true);
 
-    public async void Execute(object? parameter) => await ExecuteAsync();
+    public async void Execute(object? parameter)
+    {
+        try
+        {
+            await ExecuteAsync();
+        }
+        catch (Exception exception)
+        {
+            CommandFailed?.Invoke(exception);
+        }
+    }
+
+    public event Action<Exception>? CommandFailed;
 
     public async Task ExecuteAsync()
     {
@@ -98,7 +110,19 @@ public sealed class AsyncRelayCommand<T> : ICommand
 
     public bool CanExecute(object? parameter) => !_isExecuting && (_canExecute?.Invoke(Convert(parameter)) ?? true);
 
-    public async void Execute(object? parameter) => await ExecuteAsync(Convert(parameter));
+    public async void Execute(object? parameter)
+    {
+        try
+        {
+            await ExecuteAsync(Convert(parameter));
+        }
+        catch (Exception exception)
+        {
+            CommandFailed?.Invoke(exception);
+        }
+    }
+
+    public event Action<Exception>? CommandFailed;
 
     public async Task ExecuteAsync(T? parameter)
     {
