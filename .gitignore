@@ -1,4 +1,33 @@
-.superpowers/
+# Build and release artifacts
 **/bin/
 **/obj/
 artifacts/
+TestResults/
+*.trx
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Visual Studio & IDE
+.vs/
+.idea/
+*.DotSettings.user
+
+# AI assistant / scratch directories
+.superpowers/
+.claude/
+.gemini/
+.copilot/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

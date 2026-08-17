@@ -59,5 +59,3 @@ Use the staging endpoint for first-run certificate acceptance tests. The GUI nev
 - [Troubleshooting / pt-BR](docs/troubleshooting.pt-BR.md)
 - [Troubleshooting / English](docs/troubleshooting.en-US.md)
 - [Compatibility and validation matrix](docs/compatibility.md)
-- [Design specification — target scope](docs/superpowers/specs/2026-08-07-win-acme-gui-design.md)
-- [Production hardening implementation record](docs/superpowers/plans/2026-08-09-win-acme-gui-production-hardening.md)
