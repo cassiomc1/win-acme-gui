@@ -40,7 +40,7 @@ Plugins DNS, fontes IIS, bindings, edição/clone de renovações e instalação
 
 ## Baixar o win-acme
 
-O botão de download aceita somente o caminho oficial x64 com digest SHA-256. Em Windows, o `wacs.exe` é validado por Authenticode antes de ser usado; o ZIP também passa por preflight contra traversal, links, conflitos e conteúdo inseguro. A pasta de destino deve estar vazia e não é sobrescrita silenciosamente.
+O botão de download aceita somente o caminho oficial x64 com digest SHA-256. O `wacs.exe` não passa por validação Authenticode; o ZIP ainda passa por preflight contra traversal, links, conflitos e conteúdo inseguro. A pasta de destino deve estar vazia e não é sobrescrita silenciosamente.
 
 ## UAC, cancelamento e segurança
 

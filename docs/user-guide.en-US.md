@@ -40,7 +40,7 @@ DNS plugins, IIS sources, bindings, renewal edit/clone and automatic IIS install
 
 ## Download win-acme
 
-The download action accepts only the approved official x64 path with a SHA-256 digest. On Windows, `wacs.exe` is Authenticode-checked before use; the ZIP also passes preflight checks for traversal, links, conflicts and unsafe content. The destination must be empty and is never silently overwritten.
+The download action accepts only the approved official x64 path with a SHA-256 digest. The downloaded `wacs.exe` is not Authenticode-checked; the ZIP still passes preflight checks for traversal, links, conflicts and unsafe content. The destination must be empty and is never silently overwritten.
 
 ## UAC, cancellation and security
 
