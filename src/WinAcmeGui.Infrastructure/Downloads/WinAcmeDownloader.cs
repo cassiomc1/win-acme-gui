@@ -3,8 +3,10 @@ namespace WinAcmeGui.Infrastructure.Downloads;
 public sealed class WinAcmeDownloader(
     OfficialReleaseClient client,
     SafeZipExtractor extractor,
-    IPackageSignatureVerifier signatureVerifier)
+    IPackageSignatureVerifier signatureVerifier) : IDisposable
 {
+    public void Dispose() => client.Dispose();
+
     public async Task<string> DownloadAndExtractAsync(ReleaseAsset asset, string destination, IProgress<double>? progress, CancellationToken cancellationToken)
     {
         if (!PackageVerifier.IsSha256Digest(asset.Sha256))
@@ -45,6 +47,11 @@ public sealed class WinAcmeDownloader(
     private static void MergeStagingDirectory(string staging, string destination)
     {
         FileSystemSafety.EnsureNoReparsePointsAlongPath(destination);
+        // Directories from the archive are merged too, so an archive that ships layout-only
+        // folders keeps its shape in the destination.
+        var directories = Directory.EnumerateDirectories(staging, "*", SearchOption.AllDirectories)
+            .Select(path => Path.Combine(destination, Path.GetRelativePath(staging, path)))
+            .ToArray();
         var files = Directory.EnumerateFiles(staging, "*", SearchOption.AllDirectories)
             .Select(path => new
             {
@@ -52,19 +59,22 @@ public sealed class WinAcmeDownloader(
                 Target = Path.Combine(destination, Path.GetRelativePath(staging, path))
             })
             .ToArray();
-        if (files.Any(x => File.Exists(x.Target) || Directory.Exists(x.Target)))
+        if (directories.Any(Directory.Exists) || files.Any(x => File.Exists(x.Target) || Directory.Exists(x.Target)))
             throw new InvalidDataException("Refusing to overwrite an existing package file.");
 
         var moved = new List<string>();
         var createdDirectories = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         try
         {
+            foreach (var directory in directories) EnsureDirectory(directory, createdDirectories);
             foreach (var file in files)
             {
                 var targetDirectory = Path.GetDirectoryName(file.Target)!;
                 FileSystemSafety.EnsureNoReparsePointsAlongPath(targetDirectory);
                 EnsureDirectory(targetDirectory, createdDirectories);
-                File.Move(file.Source, file.Target);
+                // overwrite:false makes the no-clobber promise atomic; the race between the
+                // precheck above and this move surfaces as IOException and rolls back below.
+                File.Move(file.Source, file.Target, overwrite: false);
                 moved.Add(file.Target);
             }
         }

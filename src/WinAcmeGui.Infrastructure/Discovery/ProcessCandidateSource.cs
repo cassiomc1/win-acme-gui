@@ -13,9 +13,15 @@ public sealed class ProcessCandidateSource : IInstallationCandidateSource
         {
             try
             {
-                if (!string.IsNullOrWhiteSpace(process.MainModule?.FileName)) paths.Add(process.MainModule.FileName);
+                // MainModule access commonly fails for elevated/foreign processes; capture it once so
+                // neither the null check nor the filter re-throw can crash the whole discovery pass.
+                var fileName = process.MainModule?.FileName;
+                if (!string.IsNullOrWhiteSpace(fileName)) paths.Add(fileName);
             }
-            catch (Exception) when (process.HasExited || process.MainModule is null) { }
+            catch (Exception)
+            {
+                // Inaccessible process: skip it and keep scanning.
+            }
             finally { process.Dispose(); }
         }
         return Task.FromResult<IReadOnlyCollection<string>>(paths);

@@ -1,3 +1,4 @@
+using System.Text.Json;
 using FluentAssertions;
 using WinAcmeGui.Application.Operations;
 using WinAcmeGui.Domain.Operations;
@@ -23,17 +24,34 @@ public sealed class NamedPipeElevatedOperationClientTests
     }
 
     [Fact]
-    public void Protocol_request_keeps_secret_metadata_available_to_the_worker()
+    public void Protocol_request_round_trips_through_json_with_secret_metadata_intact()
     {
         var request = new ElevatedPipeRequest(
-            "1",
-            "token",
-            "operation",
+            "2",
+            Guid.NewGuid().ToString("N"),
             "Create",
             @"C:\Program Files\win-acme\wacs.exe",
-            [SensitiveArgument.Secret("--pfxpassword", "secret")]);
+            [SensitiveArgument.Secret("--pfxpassword", "s3cret!"), SensitiveArgument.Plain("--host", "example.org")]);
 
-        request.Arguments.Single().IsSecret.Should().BeTrue();
-        request.ProtocolVersion.Should().Be("1");
+        var restored = JsonSerializer.Deserialize<ElevatedPipeRequest>(JsonSerializer.Serialize(request));
+
+        restored.Should().BeEquivalentTo(request);
+        restored!.Arguments.Single(x => x.IsSecret).Value.Should().Be("s3cret!");
+    }
+
+    [Fact]
+    public void Protocol_records_never_render_secret_values_or_tokens()
+    {
+        var request = new ElevatedPipeRequest(
+            "2",
+            "op-1",
+            "Create",
+            @"C:\wacs\wacs.exe",
+            [SensitiveArgument.Secret("--pfxpassword", "s3cret!")]);
+
+        var rendered = string.Concat(request.ToString(), new WinAcmeCommand(request.ExecutablePath, request.Arguments));
+
+        rendered.Should().NotContain("s3cret!");
+        rendered.Should().Contain("--pfxpassword=••••••••");
     }
 }

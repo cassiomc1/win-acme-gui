@@ -17,19 +17,25 @@ public sealed class WinAcmeSettingsWriter(BackupService backupService)
 {
     public async Task<SettingsWriteResult> UpdateAsync(string settingsPath, SettingsPatch patch, CancellationToken cancellationToken)
     {
-        var backup = await backupService.CreateAsync(settingsPath, "settings-update", cancellationToken);
-        var root = JsonNode.Parse(await File.ReadAllTextAsync(settingsPath, cancellationToken))?.AsObject()
-            ?? throw new InvalidDataException("settings.json must contain an object.");
-        var ui = EnsureObject(root, "UI");
-        var task = EnsureObject(root, "ScheduledTask");
+        var root = JsonNode.Parse(await File.ReadAllTextAsync(settingsPath, cancellationToken));
+        if (root is not JsonObject document)
+            throw new InvalidDataException("settings.json must contain an object.");
+        var ui = EnsureObject(document, "UI");
+        var task = EnsureObject(document, "ScheduledTask");
         if (patch.PageSize is { } pageSize) { if (pageSize is < 1 or > 1000) throw new ArgumentOutOfRangeException(nameof(patch.PageSize)); ui["PageSize"] = pageSize; }
         if (patch.RenewalDays is { } renewalDays) { if (renewalDays is < 1 or > 90) throw new ArgumentOutOfRangeException(nameof(patch.RenewalDays)); task["RenewalDays"] = renewalDays; }
-        if (patch.RenewalDaysRange is { } range) { if (range < 0) throw new ArgumentOutOfRangeException(nameof(patch.RenewalDaysRange)); task["RenewalDaysRange"] = range; }
-        if (patch.VersionCheck is { } versionCheck) root["VersionCheck"] = versionCheck;
+        if (patch.RenewalDaysRange is { } range) { if (range is < 0 or > 365) throw new ArgumentOutOfRangeException(nameof(patch.RenewalDaysRange)); task["RenewalDaysRange"] = range; }
+        if (patch.VersionCheck is { } versionCheck) document["VersionCheck"] = versionCheck;
         if (patch.StartBoundary is { } startBoundary) task["StartBoundary"] = startBoundary;
 
-        var temp = settingsPath + ".win-acme-gui.tmp";
-        await File.WriteAllTextAsync(temp, root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }), cancellationToken);
+        // The backup only happens once the patch has been fully validated, so a rejected patch
+        // never leaves an orphaned backup behind.
+        var backup = await backupService.CreateAsync(settingsPath, "settings-update", cancellationToken);
+
+        // A unique temp name per operation: two overlapping updates writing the same fixed temp
+        // path could publish each other's half-written documents.
+        var temp = $"{settingsPath}.win-acme-gui-{Guid.NewGuid():N}.tmp";
+        await File.WriteAllTextAsync(temp, document.ToJsonString(new JsonSerializerOptions { WriteIndented = true }), cancellationToken);
         try
         {
             try { File.Replace(temp, settingsPath, null); }

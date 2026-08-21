@@ -22,8 +22,27 @@ public sealed class AllowlistedOperationDispatcherTests
 
         var result = await new AllowlistedOperationDispatcher().DispatchAsync(request, CancellationToken.None);
 
-        result.ErrorCode.Should().NotBe("elevation.operation.not_allowed");
+        result.ErrorCode.Should().BeNull();
         result.AcceptedOperation.Should().Be(WinAcmeOperation.Renew);
+    }
+
+    [Theory]
+    [InlineData("/renew")]
+    [InlineData("@C:\\temp\\evil.rsp")]
+    [InlineData("-p\nwhoami")]
+    public async Task Rejects_values_that_look_like_switches_response_files_or_control_payloads(string smuggled)
+    {
+        var request = ElevatedRequest.RunValidatedWinAcme(
+            @"C:\wacs.exe",
+            WinAcmeOperation.Renew,
+            "--renew",
+            "--id",
+            smuggled);
+
+        var result = await new AllowlistedOperationDispatcher().DispatchAsync(request, CancellationToken.None);
+
+        result.ErrorCode.Should().Be("elevation.operation.not_allowed");
+        result.AcceptedOperation.Should().BeNull();
     }
 
     [Fact]

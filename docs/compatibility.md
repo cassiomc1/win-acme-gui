@@ -8,7 +8,7 @@ This document separates the intended support target from the environments actual
 |---|---|---|
 | Windows 10/11 x64 | Supported target | No dedicated OS matrix is committed yet. |
 | Windows Server 2016+ x64 | Supported target | No dedicated Server 2016+ image is committed yet. |
-| GitHub `windows-latest` | CI-verified | Restore, 87 tests, WPF/worker build, unsigned CI package and manifest/hash smoke test. |
+| GitHub `windows-latest` | CI-verified | Restore, full cross-platform test suite, WPF/worker build, unsigned CI package and manifest/hash smoke test. |
 | win-acme 2.2.x, trimmed | Primary compatibility target | Typed command and renewal-reader tests; official x64 release metadata. |
 | win-acme 2.2.x, pluggable | Read/operate when the installed renewal is understood | Unknown source/plugin combinations stay diagnostic and read-only. |
 | Unknown/future win-acme formats | Read-only fallback | Candidate can remain visible with version or parser diagnostics. |
@@ -36,6 +36,6 @@ The repository does not yet claim a full Windows 10, Windows 11 and Windows Serv
 
 The release target is a self-contained `win-x64` ZIP; a separately installed .NET runtime is not required. Production packages must carry Authenticode signatures for the GUI and elevated worker, and both files must share the trusted publisher. `-AllowUnsigned` is limited to CI/development smoke checks.
 
-The package includes an x64 elevated worker and uses it through an authenticated named pipe. The downloader accepts only approved HTTPS GitHub hosts, official x64 assets with a SHA-256 digest, trusted signed binaries and safe ZIP contents.
+The package includes an x64 elevated worker and uses it through a hardened authenticated named pipe: the shared token travels only over the pipe (never the command line), the connected process identity is verified against the spawned worker before any request is sent, and responses are HMAC-authenticated with that token. The downloader accepts only approved HTTPS GitHub hosts, official x64 assets with a SHA-256 digest, trusted signed binaries and safe ZIP contents.
 
 The certificate wizard currently exposes only the manual source with HTTP-01 and TLS-ALPN-01 self-hosting validation. Generic DNS provider flows remain outside the GUI because they depend on the provider plugin and its credentials.

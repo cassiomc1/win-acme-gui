@@ -9,9 +9,14 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   windows:
     runs-on: windows-latest
+    timeout-minutes: 60
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -19,18 +24,34 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.x
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~\.nuget\packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
       - name: Restore
         run: dotnet restore WinAcmeGui.sln
-      - name: Test
+      - name: Test and build
         run: dotnet test WinAcmeGui.sln --configuration Release --no-restore
-      - name: Build WPF and elevated worker
-        run: dotnet build WinAcmeGui.sln --configuration Release --no-restore
+      - name: Dependency vulnerability audit (Windows TFM graph)
+        shell: pwsh
+        run: |
+          dotnet list "$env:GITHUB_WORKSPACE/WinAcmeGui.sln" package --vulnerable --include-transitive | Tee-Object vulnerability-audit.txt
+          if ($LASTEXITCODE -ne 0) { throw 'Vulnerable packages were reported.' }
       - name: Package portable release
         shell: pwsh
         run: ./scripts/Publish-Portable.ps1 -Version "0.0.0-${{ github.sha }}" -AllowUnsigned
       - name: Verify package contents and hashes
         shell: pwsh
         run: |
-          $package = Get-ChildItem artifacts -Filter 'WinAcmeGui-*.zip' | Select-Object -First 1
+          $package = Get-ChildItem artifacts -Filter 'WinAcmeGui-*.zip' | Sort-Object LastWriteTime -Descending | Select-Object -First 1
           if (-not $package) { throw 'Portable package was not created.' }
           ./scripts/Smoke-Test.ps1 -Package $package.FullName
+      - name: Upload portable package
+        uses: actions/upload-artifact@v4
+        with:
+          name: portable-win-x64
+          path: artifacts/WinAcmeGui-*.zip
+          retention-days: 14
+          if-no-files-found: error

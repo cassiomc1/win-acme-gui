@@ -1,5 +1,0 @@
-{
-  "Id": "renewal-unknown",
-  "Name": "unknown.example.com",
-  "Plugin": { "Source": { "Plugin": "FutureSource" } }
-}

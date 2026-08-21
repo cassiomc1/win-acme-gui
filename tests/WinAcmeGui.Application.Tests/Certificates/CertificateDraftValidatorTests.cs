@@ -62,4 +62,41 @@ public sealed class CertificateDraftValidatorTests
 
         errors.Should().NotContain(x => x.Code.StartsWith("certificate.storage.path", StringComparison.Ordinal));
     }
+
+    [Theory]
+    [InlineData("-abc.example.com")]
+    [InlineData("abc-.example.com")]
+    [InlineData("12345.678")]
+    public void Rejects_labels_with_edge_hyphens_and_numeric_only_names(string domain)
+    {
+        var errors = new CertificateDraftValidator().Validate(new CertificateDraft("manual", [domain], "http-01", "rsa", "certificatestore", AcceptTerms: true));
+
+        errors.Should().Contain(x => x.Code == "certificate.domain.invalid");
+    }
+
+    [Fact]
+    public void Rejects_wildcard_domains_with_a_dns_specific_message()
+    {
+        var errors = new CertificateDraftValidator().Validate(new CertificateDraft("manual", ["*.example.com"], "http-01", "rsa", "certificatestore", AcceptTerms: true));
+
+        errors.Should().ContainSingle(x => x.Code == "certificate.domain.wildcard");
+    }
+
+    [Fact]
+    public void Rejects_duplicate_domains_case_insensitively()
+    {
+        var errors = new CertificateDraftValidator().Validate(new CertificateDraft(
+            "manual", ["Example.com", "example.com"], "http-01", "rsa", "certificatestore", AcceptTerms: true));
+
+        errors.Should().Contain(x => x.Code == "certificate.domains.duplicate");
+    }
+
+    [Fact]
+    public void Rejects_display_name_style_email_addresses()
+    {
+        var errors = new CertificateDraftValidator().Validate(new CertificateDraft(
+            "manual", ["example.com"], "http-01", "rsa", "certificatestore", EmailAddress: "Bob <bob@example.com>", AcceptTerms: true));
+
+        errors.Should().Contain(x => x.Code == "certificate.email.invalid");
+    }
 }

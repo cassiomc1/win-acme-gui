@@ -62,16 +62,23 @@ public sealed class CultureServiceTests
     }
 
     [Fact]
-    public void Re_selecting_the_active_language_does_not_notify()
+    public void Re_selecting_the_active_language_reasserts_bindings_without_changing_culture()
     {
         var service = new CultureService();
         service.SetCulture("en-US");
-        var raised = 0;
-        service.PropertyChanged += (_, _) => raised++;
+        var raised = new List<string?>();
+        var cultureChanged = 0;
+        service.PropertyChanged += (_, args) => raised.Add(args.PropertyName);
+        service.CultureChanged += (_, _) => cultureChanged++;
 
         service.SetCulture("en-US");
 
-        raised.Should().Be(0);
+        // Selector controls bind IsChecked OneWay; a click on the active option must reassert the
+        // visual state even though the culture itself is unchanged.
+        raised.Should().Contain(nameof(CultureService.IsPortuguese));
+        raised.Should().Contain(nameof(CultureService.IsEnglish));
+        cultureChanged.Should().Be(0);
+        service.CultureName.Should().Be("en-US");
     }
 
     [Fact]

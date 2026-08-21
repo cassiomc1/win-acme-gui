@@ -31,9 +31,10 @@ public sealed class OfficialWinAcmeInstaller : IWinAcmeInstaller
     public async Task<InstalledPackage> InstallLatestAsync(IProgress<double>? progress, CancellationToken cancellationToken)
     {
         var verifier = new PackageVerifier(ApprovedHosts);
-        var asset = await new OfficialReleaseCatalog(verifier).GetLatestAsync(cancellationToken);
+        using var catalog = new OfficialReleaseCatalog(verifier);
+        var asset = await catalog.GetLatestAsync(cancellationToken);
         var destination = ResolveDestination(asset.Version);
-        var downloader = new WinAcmeDownloader(
+        using var downloader = new WinAcmeDownloader(
             new OfficialReleaseClient(verifier),
             new SafeZipExtractor(),
             new WindowsAuthenticodeSignatureVerifier());

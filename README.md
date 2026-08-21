@@ -13,7 +13,7 @@ The current shell provides:
 - a manual certificate wizard with HTTP-01 or TLS-ALPN-01 validation, RSA/EC keys, certificate-store/PFX/PEM output and staging preview;
 - Portuguese (Brazil) and English labels;
 - a GUI-only light/dark theme toggle;
-- shell-free typed command execution, secret redaction, cancellation and an authenticated allowlisted elevated worker on Windows;
+- shell-free typed command execution, secret redaction, cancellation and an authenticated allowlisted elevated worker on Windows. The GUI↔worker handshake never places the shared token on a command line, verifies the connected process identity before sending requests and HMAC-authenticates every response;
 - safe official x64 release download, SHA-256 verification, Authenticode validation on Windows, ZIP preflight and backup primitives.
 
 The GUI never edits `*.renewal.json` directly or decrypts win-acme secrets. Unknown, malformed or shared-configuration renewals remain visible and read-only.
@@ -38,7 +38,7 @@ dotnet test WinAcmeGui.sln --configuration Release
 dotnet build WinAcmeGui.sln --configuration Release
 ```
 
-The WPF visual project targets `net8.0-windows` on Windows. On non-Windows hosts it compiles its testable non-visual layer so the cross-platform suite remains runnable. The GitHub Windows acceptance workflow currently runs on `windows-latest` and checks tests, WPF/worker compilation, unsigned CI packaging and package hashes. It is not a complete Windows 10/11/Server matrix and does not replace real UAC, IIS, Scheduled Tasks, certificate-store or staging-lifecycle acceptance.
+The WPF visual project targets `net8.0-windows` on Windows. On non-Windows hosts it compiles its testable non-visual layer so the cross-platform suite remains runnable. The GitHub Windows acceptance workflow currently runs on `windows-latest` and checks tests, WPF/worker compilation, unsigned CI packaging, package hashes and uploads the validated ZIP as a workflow artifact. It is not a complete Windows 10/11/Server matrix and does not replace real UAC, IIS, Scheduled Tasks, certificate-store or staging-lifecycle acceptance.
 
 ## Portable package on Windows
 

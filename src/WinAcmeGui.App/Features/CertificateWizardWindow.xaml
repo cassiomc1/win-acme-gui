@@ -4,7 +4,8 @@
         Width="720" Height="760" MinWidth="620" MinHeight="600"
         WindowStartupLocation="CenterOwner"
         Background="{DynamicResource WindowBackground}"
-        Title="{Binding Culture[NewCertificate]}">
+        Title="{Binding Culture[NewCertificate]}"
+        PreviewKeyDown="Window_PreviewKeyDown">
   <DockPanel Margin="24">
     <!-- Footer stays pinned so the actions are reachable regardless of scroll position. -->
     <Border DockPanel.Dock="Bottom" Margin="0,16,0,0">

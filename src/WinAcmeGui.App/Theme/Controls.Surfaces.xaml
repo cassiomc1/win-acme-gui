@@ -70,6 +70,10 @@
                   <Trigger Property="IsMouseOver" Value="True">
                     <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource SidebarHoverBackground}" />
                   </Trigger>
+                  <Trigger Property="IsKeyboardFocused" Value="True">
+                    <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource SidebarHoverBackground}" />
+                    <Setter TargetName="Rail" Property="Background" Value="{DynamicResource FocusBrush}" />
+                  </Trigger>
                   <Trigger Property="IsSelected" Value="True">
                     <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource SidebarSelectedBackground}" />
                     <Setter TargetName="Rail" Property="Background" Value="{DynamicResource AccentHoverBrush}" />

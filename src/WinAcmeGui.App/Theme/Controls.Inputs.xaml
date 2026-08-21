@@ -127,6 +127,14 @@
                           ClickMode="Press"
                           Template="{StaticResource ComboToggleTemplate}"
                           IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}" />
+            <!-- Keyboard focus ring: the inner toggle is focusable=False, so focus lands on the
+                 ComboBox itself and would otherwise be invisible to keyboard users. -->
+            <Border x:Name="FocusRing"
+                    BorderBrush="{DynamicResource FocusBrush}"
+                    BorderThickness="1"
+                    CornerRadius="{DynamicResource RadiusSmall}"
+                    Opacity="0"
+                    IsHitTestVisible="False" />
             <ContentPresenter Margin="{TemplateBinding Padding}"
                               HorizontalAlignment="Left"
                               VerticalAlignment="Center"
@@ -154,6 +162,9 @@
           <ControlTemplate.Triggers>
             <Trigger Property="IsEnabled" Value="False">
               <Setter Property="Foreground" Value="{DynamicResource ControlDisabledForeground}" />
+            </Trigger>
+            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+              <Setter TargetName="FocusRing" Property="Opacity" Value="1" />
             </Trigger>
           </ControlTemplate.Triggers>
         </ControlTemplate>

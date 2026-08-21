@@ -68,7 +68,7 @@
                    Style="{StaticResource NavigationList}"
                    ItemsSource="{Binding Sections}"
                    SelectedItem="{Binding SelectedSection, Mode=TwoWay}"
-                   AutomationProperties.Name="{Binding Culture[AppSubtitle]}" />
+                   AutomationProperties.Name="{Binding Culture[NavigationListName]}" />
         </ScrollViewer>
       </DockPanel>
     </Border>
@@ -98,11 +98,13 @@
                   CornerRadius="{DynamicResource RadiusSmall}"
                   Padding="2" Margin="0,0,10,0">
             <StackPanel Orientation="Horizontal">
-              <ToggleButton Content="PT" Style="{StaticResource PillToggle}"
+              <RadioButton Content="PT" Style="{StaticResource PillToggle}"
+                            GroupName="Language"
                             IsChecked="{Binding Culture.IsPortuguese, Mode=OneWay}"
                             Command="{Binding SetPortugueseCommand}"
                             AutomationProperties.Name="Português (Brasil)" />
-              <ToggleButton Content="EN" Style="{StaticResource PillToggle}"
+              <RadioButton Content="EN" Style="{StaticResource PillToggle}"
+                            GroupName="Language"
                             IsChecked="{Binding Culture.IsEnglish, Mode=OneWay}"
                             Command="{Binding SetEnglishCommand}"
                             AutomationProperties.Name="English" />

@@ -168,7 +168,10 @@ public sealed class RenewalDocumentReader : IRenewalReader
     private static DateTimeOffset? GetDateTime(JsonElement element, string property)
     {
         var value = GetString(element, property);
-        return DateTimeOffset.TryParse(value, out var parsed) ? parsed : null;
+        // wacs writes ISO-8601 timestamps; parse them culture-independently so a machine with a
+        // non-standard calendar or culture cannot misread renewal health.
+        return DateTimeOffset.TryParse(value, System.Globalization.CultureInfo.InvariantCulture,
+            System.Globalization.DateTimeStyles.RoundtripKind, out var parsed) ? parsed : null;
     }
 
     private static string GetFallbackId(string path) =>

@@ -86,6 +86,8 @@ public sealed partial class ShellViewModel : ObservableObject
         NavigateCommand = new RelayCommand<NavigationItem>(item => { if (item is not null) SelectedSection = item; });
         ClearFiltersCommand = new RelayCommand(ClearFilters, () => HasActiveFilters);
         ToggleThemeCommand = new RelayCommand(() => IsDarkTheme = !IsDarkTheme);
+        SetLightThemeCommand = new RelayCommand(() => IsDarkTheme = false);
+        SetDarkThemeCommand = new RelayCommand(() => IsDarkTheme = true);
         SetPortugueseCommand = new RelayCommand(() => SetCulture(LocalizationTable.PortugueseBrazilCulture));
         SetEnglishCommand = new RelayCommand(() => SetCulture(LocalizationTable.EnglishCulture));
         ClearActivityCommand = new RelayCommand(() => { Activity.Clear(); Raise(nameof(HasActivity)); }, () => Activity.Count > 0);
@@ -120,6 +122,8 @@ public sealed partial class ShellViewModel : ObservableObject
     public RelayCommand<NavigationItem> NavigateCommand { get; }
     public RelayCommand ClearFiltersCommand { get; }
     public RelayCommand ToggleThemeCommand { get; }
+    public RelayCommand SetLightThemeCommand { get; }
+    public RelayCommand SetDarkThemeCommand { get; }
     public RelayCommand SetPortugueseCommand { get; }
     public RelayCommand SetEnglishCommand { get; }
     public RelayCommand ClearActivityCommand { get; }
