@@ -38,7 +38,7 @@ public sealed class InstallationValidatorTests : IDisposable
             Path.Combine(_root, "effective-config"),
             AcmeEndpoint.Staging,
             new Dictionary<string, string>());
-        var validator = new InstallationValidator(new StubProbe(), new StubConfigurationReader(snapshot), executableTrustVerifier: new TrustedExecutableStub());
+        var validator = new InstallationValidator(new StubProbe(), new StubConfigurationReader(snapshot));
 
         var result = await validator.ValidateAsync(executable, CancellationToken.None);
 
@@ -66,10 +66,5 @@ public sealed class InstallationValidatorTests : IDisposable
     private sealed class StubConfigurationReader(ConfigurationSnapshot snapshot) : IWinAcmeConfigurationReader
     {
         public Task<ConfigurationSnapshot> ReadAsync(string executablePath, CancellationToken cancellationToken) => Task.FromResult(snapshot);
-    }
-
-    private sealed class TrustedExecutableStub : IExecutableTrustVerifier
-    {
-        public Task<bool> IsTrustedAsync(string executablePath, CancellationToken cancellationToken) => Task.FromResult(true);
     }
 }

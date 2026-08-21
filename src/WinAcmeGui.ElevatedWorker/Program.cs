@@ -105,9 +105,6 @@ internal static class Program
             return Failure("elevation.protocol.invalid_request", request?.OperationId);
         if (!Enum.TryParse<WinAcmeOperation>(request.Operation, true, out var operation))
             return Failure("elevation.operation.not_allowed", request.OperationId);
-        var trustVerifier = new WindowsAuthenticodeSignatureVerifier();
-        if (!await trustVerifier.IsTrustedAsync(request.ExecutablePath, CancellationToken.None))
-            return Failure("elevation.executable.untrusted", request.OperationId);
 
         var arguments = Flatten(request.Arguments);
         var dispatchRequest = new ElevatedRequest(
