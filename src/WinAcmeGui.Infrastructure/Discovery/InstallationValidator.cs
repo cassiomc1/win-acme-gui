@@ -10,16 +10,13 @@ namespace WinAcmeGui.Infrastructure.Discovery;
 public sealed class InstallationValidator(
     IWinAcmeVersionProbe versionProbe,
     IWinAcmeConfigurationReader? configurationReader = null,
-    Func<string, CancellationToken, Task<string>>? configurationPathResolver = null,
-    IExecutableTrustVerifier? executableTrustVerifier = null) : IInstallationValidator
+    Func<string, CancellationToken, Task<string>>? configurationPathResolver = null) : IInstallationValidator
 {
     private static readonly Regex VersionPattern = new(@"(?<major>\d+)\.(?<minor>\d+)\.(?<build>\d+)(?:\.(?<revision>\d+))?", RegexOptions.Compiled);
 
     public async Task<InstallationCandidate?> ValidateAsync(string executablePath, CancellationToken cancellationToken)
     {
         if (!File.Exists(executablePath)) return null;
-        var trustVerifier = executableTrustVerifier ?? new WindowsAuthenticodeSignatureVerifier();
-        if (!await trustVerifier.IsTrustedAsync(executablePath, cancellationToken)) return null;
         string versionText;
         try { versionText = await versionProbe.GetVersionAsync(executablePath, cancellationToken); }
         catch (OperationCanceledException) { throw; }

@@ -12,7 +12,6 @@ namespace WinAcmeGui.Infrastructure.Operations;
 public sealed class NamedPipeElevatedOperationClient(
     string workerPath,
     TimeSpan? timeout = null,
-    IExecutableTrustVerifier? executableTrustVerifier = null,
     IExecutableTrustVerifier? workerTrustVerifier = null) : IElevatedOperationClient
 {
     private const string ProtocolVersion = "2";
@@ -25,15 +24,12 @@ public sealed class NamedPipeElevatedOperationClient(
             return new(OperationStatus.Failed, null, TimeSpan.Zero, [], "elevation.windows.required");
         if (!Path.IsPathFullyQualified(workerPath) || !File.Exists(workerPath))
             return new(OperationStatus.Failed, null, TimeSpan.Zero, [], "elevation.worker.missing");
-        var trustVerifier = executableTrustVerifier ?? new WindowsAuthenticodeSignatureVerifier();
         var workerVerifier = workerTrustVerifier ?? new WindowsAuthenticodeSignatureVerifier(requireTrustedPublisher: false);
         if (!await workerVerifier.IsTrustedAsync(workerPath, cancellationToken))
             return new(OperationStatus.Failed, null, TimeSpan.Zero, [], "elevation.worker.untrusted");
         if (workerVerifier is WindowsAuthenticodeSignatureVerifier authenticodeVerifier
             && !await authenticodeVerifier.HasSameSignerAsync(Environment.ProcessPath ?? string.Empty, workerPath, cancellationToken))
             return new(OperationStatus.Failed, null, TimeSpan.Zero, [], "elevation.worker.publisher.mismatch");
-        if (!await trustVerifier.IsTrustedAsync(command.ExecutablePath, cancellationToken))
-            return new(OperationStatus.Failed, null, TimeSpan.Zero, [], "elevation.executable.untrusted");
 
         var operation = GetOperation(command);
         if (operation is null)
