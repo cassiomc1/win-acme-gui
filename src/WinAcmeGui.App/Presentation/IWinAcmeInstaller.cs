@@ -7,7 +7,7 @@ public sealed record InstalledPackage(string Version, string Destination);
 
 /// <summary>
 /// Fetches the official win-acme release. Behind an interface because the concrete implementation
-/// performs network I/O and Authenticode checks that the shell tests must not trigger.
+/// performs network I/O that the shell tests must not trigger.
 /// </summary>
 public interface IWinAcmeInstaller
 {
@@ -15,8 +15,8 @@ public interface IWinAcmeInstaller
 }
 
 /// <summary>
-/// Production installer: approved GitHub hosts only, SHA-256 digest match, signature verification and
-/// a safe ZIP extraction into a fresh directory.
+/// Production installer: approved GitHub hosts only, SHA-256 digest match and a safe ZIP extraction
+/// into a fresh directory.
 /// </summary>
 public sealed class OfficialWinAcmeInstaller : IWinAcmeInstaller
 {
@@ -37,7 +37,7 @@ public sealed class OfficialWinAcmeInstaller : IWinAcmeInstaller
         using var downloader = new WinAcmeDownloader(
             new OfficialReleaseClient(verifier),
             new SafeZipExtractor(),
-            new WindowsAuthenticodeSignatureVerifier());
+            new PackageIntegrityVerifier());
         await downloader.DownloadAndExtractAsync(asset, destination, progress, cancellationToken);
         return new(asset.Version, destination);
     }

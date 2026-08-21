@@ -14,7 +14,7 @@ The current shell provides:
 - Portuguese (Brazil) and English labels;
 - a GUI-only light/dark theme toggle;
 - shell-free typed command execution, secret redaction, cancellation and an authenticated allowlisted elevated worker on Windows. The GUI↔worker handshake never places the shared token on a command line, verifies the connected process identity before sending requests and HMAC-authenticates every response;
-- safe official x64 release download, SHA-256 verification, Authenticode validation on Windows, ZIP preflight and backup primitives.
+- safe official x64 release download, SHA-256 verification, ZIP preflight and backup primitives.
 
 The GUI never edits `*.renewal.json` directly or decrypts win-acme secrets. Unknown, malformed or shared-configuration renewals remain visible and read-only.
 
@@ -48,7 +48,7 @@ pwsh ./scripts/Publish-Portable.ps1 -SigningCertificatePath .\release-signing.pf
 
 The script tests the solution, publishes self-contained `win-x64` GUI and worker binaries, copies the operational documentation and notices, writes a relative-path SHA-256 manifest, and creates `artifacts/WinAcmeGui-<version>-win-x64.zip`.
 
-Production packages must be Authenticode-signed with `-SigningCertificatePath` (and optionally `-SigningCertificatePassword`). `-AllowUnsigned` is reserved for CI/development validation and cannot pass the runtime worker trust boundary. The release downloader accepts only approved HTTPS GitHub hosts, official x64 assets with a SHA-256 digest, trusted signed binaries and safe ZIP contents.
+Production packages must be Authenticode-signed with `-SigningCertificatePath` (and optionally `-SigningCertificatePassword`). `-AllowUnsigned` is reserved for CI/development validation and cannot pass the runtime worker trust boundary. The release downloader accepts only approved HTTPS GitHub hosts, official x64 assets with a SHA-256 digest and safe ZIP contents; it does not validate the downloaded `wacs.exe` Authenticode certificate.
 
 Use the staging endpoint for first-run certificate acceptance tests. The GUI never silently overwrites an existing win-acme directory.
 

@@ -26,6 +26,22 @@ public sealed class WinAcmeDownloaderTests : IDisposable
     }
 
     [Fact]
+    public async Task Official_package_integrity_check_does_not_require_Authenticode()
+    {
+        Directory.CreateDirectory(_root);
+        var package = CreateZip("wacs.exe", "unsigned test binary");
+        var hash = Convert.ToHexString(SHA256.HashData(package));
+        var asset = new ReleaseAsset("v1", "x64", "pluggable", new Uri("https://github.com/win-acme/package.zip"), hash);
+        var client = new OfficialReleaseClient(new HttpClient(new BytesHandler(package)), new PackageVerifier(["github.com"]));
+        var destination = Path.Combine(_root, "out");
+
+        await new WinAcmeDownloader(client, new SafeZipExtractor(), new PackageIntegrityVerifier())
+            .DownloadAndExtractAsync(asset, destination, null, CancellationToken.None);
+
+        File.Exists(Path.Combine(destination, "wacs.exe")).Should().BeTrue();
+    }
+
+    [Fact]
     public async Task Fails_closed_when_release_metadata_has_no_digest()
     {
         var asset = new ReleaseAsset("v1", "x64", "trimmed", new Uri("https://github.com/win-acme/package.zip"), null);

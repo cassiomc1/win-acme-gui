@@ -23,7 +23,7 @@ The repository does not yet claim a full Windows 10, Windows 11 and Windows Serv
 | Renewal inventory and filtering | Available; invalid, unknown and shared-configuration rows are diagnostic/read-only. |
 | Renew, Force, Cancel and Revoke | Available for editable rows; confirmation rules apply. |
 | Manual certificate creation | Available for HTTP-01/TLS-ALPN-01, RSA/EC and certificate-store/PFX/PEM output. |
-| Official download | Available for the approved x64 release path, digest and signature checks. |
+| Official download | Available for the approved x64 release path, SHA-256 digest and safe ZIP checks. `wacs.exe` Authenticode is not validated by the downloader. |
 | GUI appearance | Available; light/dark theme is local to the GUI and does not modify win-acme. |
 | IIS source/bindings | Not exposed by the current shell. |
 | DNS provider setup | Not exposed; configure provider plugins in win-acme. |
@@ -36,6 +36,6 @@ The repository does not yet claim a full Windows 10, Windows 11 and Windows Serv
 
 The release target is a self-contained `win-x64` ZIP; a separately installed .NET runtime is not required. Production packages must carry Authenticode signatures for the GUI and elevated worker, and both files must share the trusted publisher. `-AllowUnsigned` is limited to CI/development smoke checks.
 
-The package includes an x64 elevated worker and uses it through a hardened authenticated named pipe: the shared token travels only over the pipe (never the command line), the connected process identity is verified against the spawned worker before any request is sent, and responses are HMAC-authenticated with that token. The downloader accepts only approved HTTPS GitHub hosts, official x64 assets with a SHA-256 digest, trusted signed binaries and safe ZIP contents.
+The package includes an x64 elevated worker and uses it through a hardened authenticated named pipe: the shared token travels only over the pipe (never the command line), the connected process identity is verified against the spawned worker before any request is sent, and responses are HMAC-authenticated with that token. The downloader accepts only approved HTTPS GitHub hosts, official x64 assets with a SHA-256 digest and safe ZIP contents; it does not validate the downloaded `wacs.exe` Authenticode certificate.
 
 The certificate wizard currently exposes only the manual source with HTTP-01 and TLS-ALPN-01 self-hosting validation. Generic DNS provider flows remain outside the GUI because they depend on the provider plugin and its credentials.
