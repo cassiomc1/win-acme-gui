@@ -81,6 +81,7 @@
                   Style="{StaticResource FlatDataGrid}"
                   ItemsSource="{Binding FilteredRenewals}"
                   SelectedItem="{Binding SelectedRenewal, Mode=TwoWay}"
+                  AutomationProperties.Name="{Binding Culture[RenewalsDescription]}"
                   Visibility="{Binding HasFilteredRenewals, Converter={StaticResource BoolToVisibility}}">
           <DataGrid.Columns>
             <DataGridTextColumn Header="{Binding Data.Culture[FriendlyName], Source={StaticResource PageContext}}"

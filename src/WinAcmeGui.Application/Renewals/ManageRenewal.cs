@@ -13,11 +13,13 @@ public sealed class ManageRenewal(IWinAcmeRunner runner, WinAcmeCommandFactory c
 
     public Task<OperationResult> CancelAsync(string executablePath, Renewal renewal, string confirmation, CancellationToken cancellationToken) =>
         !renewal.IsEditable ? Task.FromResult(ReadOnlyRenewal())
-        : confirmation.Equals(renewal.FriendlyName, StringComparison.Ordinal) ? runner.RunAsync(commandFactory.CreateCancel(executablePath, renewal.Id), null, cancellationToken) : Task.FromResult(RejectedConfirmation());
+        : string.IsNullOrEmpty(confirmation) ? Task.FromResult(RejectedConfirmation())
+        : string.Equals(confirmation, renewal.FriendlyName, StringComparison.Ordinal) ? runner.RunAsync(commandFactory.CreateCancel(executablePath, renewal.Id), null, cancellationToken) : Task.FromResult(RejectedConfirmation());
 
     public Task<OperationResult> RevokeAsync(string executablePath, Renewal renewal, string confirmation, CancellationToken cancellationToken) =>
         !renewal.IsEditable ? Task.FromResult(ReadOnlyRenewal())
-        : confirmation.Equals(renewal.FriendlyName, StringComparison.Ordinal) ? runner.RunAsync(commandFactory.CreateRevoke(executablePath, renewal.Id), null, cancellationToken) : Task.FromResult(RejectedConfirmation());
+        : string.IsNullOrEmpty(confirmation) ? Task.FromResult(RejectedConfirmation())
+        : string.Equals(confirmation, renewal.FriendlyName, StringComparison.Ordinal) ? runner.RunAsync(commandFactory.CreateRevoke(executablePath, renewal.Id), null, cancellationToken) : Task.FromResult(RejectedConfirmation());
 
     private static OperationResult RejectedConfirmation() =>
         new(OperationStatus.Failed, null, TimeSpan.Zero, [], "confirmation.name.mismatch");

@@ -22,16 +22,18 @@
                     CornerRadius="{DynamicResource RadiusSmall}"
                     Padding="2">
               <StackPanel Orientation="Horizontal">
-                <ToggleButton Content="Português (Brasil)"
-                              Style="{StaticResource PillToggle}"
-                              MinWidth="140"
-                              IsChecked="{Binding Culture.IsPortuguese, Mode=OneWay}"
-                              Command="{Binding SetPortugueseCommand}" />
-                <ToggleButton Content="English"
-                              Style="{StaticResource PillToggle}"
-                              MinWidth="90"
-                              IsChecked="{Binding Culture.IsEnglish, Mode=OneWay}"
-                              Command="{Binding SetEnglishCommand}" />
+                <RadioButton Content="Português (Brasil)"
+                             Style="{StaticResource PillToggle}"
+                             GroupName="SettingsLanguage"
+                             MinWidth="140"
+                             IsChecked="{Binding Culture.IsPortuguese, Mode=OneWay}"
+                             Command="{Binding SetPortugueseCommand}" />
+                <RadioButton Content="English"
+                             Style="{StaticResource PillToggle}"
+                             GroupName="SettingsLanguage"
+                             MinWidth="90"
+                             IsChecked="{Binding Culture.IsEnglish, Mode=OneWay}"
+                             Command="{Binding SetEnglishCommand}" />
               </StackPanel>
             </Border>
           </Grid>
@@ -47,17 +49,19 @@
                     CornerRadius="{DynamicResource RadiusSmall}"
                     Padding="2">
               <StackPanel Orientation="Horizontal">
-                <!-- Both toggles drive the same command; IsChecked mirrors the current theme. -->
-                <ToggleButton Content="{Binding Culture[ThemeLight]}"
-                              Style="{StaticResource PillToggle}"
-                              MinWidth="90"
-                              IsChecked="{Binding IsDarkTheme, Mode=OneWay, Converter={StaticResource InverseBool}}"
-                              Command="{Binding ToggleThemeCommand}" />
-                <ToggleButton Content="{Binding Culture[ThemeDark]}"
-                              Style="{StaticResource PillToggle}"
-                              MinWidth="90"
-                              IsChecked="{Binding IsDarkTheme, Mode=OneWay}"
-                              Command="{Binding ToggleThemeCommand}" />
+                <!-- Absolute-state selectors: clicking the active option is a no-op. -->
+                <RadioButton Content="{Binding Culture[ThemeLight]}"
+                             Style="{StaticResource PillToggle}"
+                             GroupName="Theme"
+                             MinWidth="90"
+                             IsChecked="{Binding IsDarkTheme, Mode=OneWay, Converter={StaticResource InverseBool}}"
+                             Command="{Binding SetLightThemeCommand}" />
+                <RadioButton Content="{Binding Culture[ThemeDark]}"
+                             Style="{StaticResource PillToggle}"
+                             GroupName="Theme"
+                             MinWidth="90"
+                             IsChecked="{Binding IsDarkTheme, Mode=OneWay}"
+                             Command="{Binding SetDarkThemeCommand}" />
               </StackPanel>
             </Border>
           </Grid>

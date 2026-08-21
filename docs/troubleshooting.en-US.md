@@ -15,7 +15,9 @@ Preserve the original file first and copy the status code shown by the GUI. Do n
 
 | Code | Likely cause | Action |
 |---|---|---|
-| `process.start.failed` | Missing, blocked or invalid executable path | Revalidate `wacs.exe` and permissions. |
+| `process.start.notfound` | The executable or a dependency was not found | Revalidate the `wacs.exe` path and reinstall if needed. |
+| `process.start.denied` | Access denied when starting the executable | Check file permissions and antivirus blocking. |
+| `process.start.failed` | The executable could not be started for another reason | Revalidate `wacs.exe` and permissions. |
 | `process.exit.nonzero` | win-acme exited with an error | Inspect masked output, exit code and the original log. |
 | `operation.cancelled` | The user cancelled the operation | Confirm the process exited and refresh the inventory. |
 | `operation.timeout` | The process exceeded its limit | Inspect the log and retry in staging. |
@@ -31,7 +33,7 @@ Cancel and Revoke require the exact friendly name. Revocation is for a compromis
 - **`elevation.worker.untrusted`, `elevation.executable.untrusted` or `elevation.worker.publisher.mismatch`:** use an Authenticode-signed production package; the GUI and worker must share the same trusted publisher.
 - **`elevation.worker.start.failed` or `elevation.worker.timeout`:** check permissions, antivirus, the worker path and Windows logs.
 - **`elevation.operation.not_allowed`:** the operation or argument is outside the allowlist; do not bypass the block.
-- **`elevation.protocol.*`:** the GUI and worker disagree about the protocol. Re-extract a complete package and do not mix `worker` folders from different versions.
+- **`elevation.protocol.*`:** the GUI and worker disagree about the protocol, or the connected process was not the elevated worker we started. Re-extract a complete package and do not mix `worker` folders from different versions.
 
 ## Download blocked
 

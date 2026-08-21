@@ -7,4 +7,12 @@
       </requestedPrivileges>
     </security>
   </trustInfo>
+  <!-- PerMonitorV2 keeps text crisp on mixed-DPI multi-monitor setups; WPF defaults to
+       system-DPI-aware, which blurs when a window moves between monitors with different scales. -->
+  <application xmlns="urn:schemas-microsoft-com:asm.v3">
+    <windowsSettings>
+      <dpiAwareness xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">PerMonitorV2</dpiAwareness>
+      <longPathAware xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">true</longPathAware>
+    </windowsSettings>
+  </application>
 </assembly>

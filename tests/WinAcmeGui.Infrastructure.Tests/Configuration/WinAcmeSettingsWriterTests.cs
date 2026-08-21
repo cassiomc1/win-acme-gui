@@ -25,6 +25,36 @@ public sealed class WinAcmeSettingsWriterTests : IDisposable
         document["UI"]!["PageSize"]!.GetValue<int>().Should().Be(100);
     }
 
+    [Fact]
+    public async Task Non_object_settings_reject_with_a_clear_error()
+    {
+        Directory.CreateDirectory(_root);
+        var path = Path.Combine(_root, "settings.json");
+        await File.WriteAllTextAsync(path, "[1, 2, 3]");
+        var writer = new WinAcmeSettingsWriter(new BackupService(Path.Combine(_root, "backups")));
+
+        var act = () => writer.UpdateAsync(path, new SettingsPatch(PageSize: 100), CancellationToken.None);
+
+        await act.Should().ThrowAsync<InvalidDataException>()
+            .WithMessage("*must contain an object*");
+    }
+
+    [Fact]
+    public async Task Rejected_patches_do_not_create_orphan_backups()
+    {
+        Directory.CreateDirectory(_root);
+        var path = Path.Combine(_root, "settings.json");
+        await File.WriteAllTextAsync(path, "{\"UI\":{\"PageSize\":50}}");
+        var backupRoot = Path.Combine(_root, "backups");
+        var writer = new WinAcmeSettingsWriter(new BackupService(backupRoot));
+
+        var act = () => writer.UpdateAsync(path, new SettingsPatch(RenewalDays: 9999), CancellationToken.None);
+
+        await act.Should().ThrowAsync<ArgumentOutOfRangeException>();
+        if (Directory.Exists(backupRoot))
+            Directory.EnumerateFiles(backupRoot, "*", SearchOption.AllDirectories).Should().BeEmpty();
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_root)) Directory.Delete(_root, true);

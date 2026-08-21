@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Text;
 using WinAcmeGui.Application.Operations;
 using WinAcmeGui.Domain.Operations;
 
@@ -22,7 +23,11 @@ public sealed class WinAcmeProcessRunner(TimeSpan? timeout = null) : IWinAcmeRun
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             CreateNoWindow = true,
-            WorkingDirectory = Path.GetDirectoryName(command.ExecutablePath) ?? Environment.CurrentDirectory
+            WorkingDirectory = Path.GetDirectoryName(command.ExecutablePath) ?? Environment.CurrentDirectory,
+            // wacs emits UTF-8; without this the redirected streams decode with the OEM code page
+            // and non-ASCII domain names garble before redaction.
+            StandardOutputEncoding = Encoding.UTF8,
+            StandardErrorEncoding = Encoding.UTF8
         };
         foreach (var argument in command.Arguments)
         {
@@ -35,17 +40,28 @@ public sealed class WinAcmeProcessRunner(TimeSpan? timeout = null) : IWinAcmeRun
         {
             process = Process.Start(info) ?? throw new InvalidOperationException("Could not start operation process.");
         }
+        // Distinct codes keep the troubleshooting guide actionable: access denied and file-not-found
+        // have completely different remedies.
+        catch (Win32Exception ex) when (ex.NativeErrorCode == 2 || ex.NativeErrorCode == 3)
+        {
+            return new(OperationStatus.Failed, null, Stopwatch.GetElapsedTime(start), [], "process.start.notfound");
+        }
+        catch (Win32Exception ex) when (ex.NativeErrorCode == 5)
+        {
+            return new(OperationStatus.Failed, null, Stopwatch.GetElapsedTime(start), [], "process.start.denied");
+        }
         catch (Win32Exception)
         {
             return new(OperationStatus.Failed, null, Stopwatch.GetElapsedTime(start), [], "process.start.failed");
         }
         catch (FileNotFoundException)
         {
-            return new(OperationStatus.Failed, null, Stopwatch.GetElapsedTime(start), [], "process.start.failed");
+            return new(OperationStatus.Failed, null, Stopwatch.GetElapsedTime(start), [], "process.start.notfound");
         }
 
         using (process)
         using (var operationCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
+        using (var readerCts = CancellationTokenSource.CreateLinkedTokenSource(operationCts.Token))
         {
             operationCts.CancelAfter(_timeout);
             var lines = new ConcurrentQueue<string>();
@@ -53,7 +69,7 @@ public sealed class WinAcmeProcessRunner(TimeSpan? timeout = null) : IWinAcmeRun
 
             async Task ReadAsync(StreamReader reader)
             {
-                while (await reader.ReadLineAsync(operationCts.Token) is { } line)
+                while (await reader.ReadLineAsync(readerCts.Token) is { } line)
                 {
                     var safeLine = redactor.Redact(line);
                     lines.Enqueue(safeLine);
@@ -66,9 +82,6 @@ public sealed class WinAcmeProcessRunner(TimeSpan? timeout = null) : IWinAcmeRun
             try
             {
                 await process.WaitForExitAsync(operationCts.Token);
-                await Task.WhenAll(stdout, stderr);
-                var status = process.ExitCode == 0 ? OperationStatus.Succeeded : OperationStatus.Failed;
-                return new(status, process.ExitCode, Stopwatch.GetElapsedTime(start), lines.ToArray(), process.ExitCode == 0 ? null : "process.exit.nonzero");
             }
             catch (OperationCanceledException) when (operationCts.IsCancellationRequested)
             {
@@ -78,6 +91,21 @@ public sealed class WinAcmeProcessRunner(TimeSpan? timeout = null) : IWinAcmeRun
                 var status = cancellationToken.IsCancellationRequested ? OperationStatus.Cancelled : OperationStatus.TimedOut;
                 return new(status, null, Stopwatch.GetElapsedTime(start), lines.ToArray(), status == OperationStatus.Cancelled ? "operation.cancelled" : "operation.timeout");
             }
+
+            // A child that inherited the redirected handles and outlives wacs keeps the pipes open;
+            // bound the drain so an orphan cannot hold a finished run hostage until the full
+            // operation timeout fires and misclassifies a successful exit.
+            readerCts.CancelAfter(TimeSpan.FromSeconds(10));
+            try
+            {
+                await Task.WhenAll(stdout, stderr);
+            }
+            catch (OperationCanceledException) when (!operationCts.IsCancellationRequested)
+            {
+                // Drain timed out with a healthy exit code: report what was captured.
+            }
+            var finalStatus = process.ExitCode == 0 ? OperationStatus.Succeeded : OperationStatus.Failed;
+            return new(finalStatus, process.ExitCode, Stopwatch.GetElapsedTime(start), lines.ToArray(), process.ExitCode == 0 ? null : "process.exit.nonzero");
         }
     }
 

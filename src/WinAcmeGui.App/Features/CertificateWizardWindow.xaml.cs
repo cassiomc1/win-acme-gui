@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Windows;
+using System.Windows.Input;
 using WinAcmeGui.App.Presentation;
 
 namespace WinAcmeGui.App.Features;
@@ -16,8 +17,13 @@ public partial class CertificateWizardWindow : Window
         DataContext = viewModel;
         viewModel.CompletedSuccessfully += (_, _) => Dispatcher.Invoke(() =>
         {
-            DialogResult = true;
-            Close();
+            // The operator may have closed the window in the same dispatcher turn; setting
+            // DialogResult on a closed window throws InvalidOperationException.
+            if (IsLoaded && DialogResult is null)
+            {
+                DialogResult = true;
+                Close();
+            }
         });
     }
 
@@ -26,5 +32,16 @@ public partial class CertificateWizardWindow : Window
     {
         _viewModel.CancelRunningOperation();
         base.OnClosing(e);
+    }
+
+    /// <summary>
+    /// Escape closes an idle wizard. While running the footer Cancel command owns cancellation
+    /// (it is the only button enabled), so Escape does nothing to avoid double-cancelling.
+    /// </summary>
+    private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Escape || _viewModel.IsRunning) return;
+        Close();
+        e.Handled = true;
     }
 }

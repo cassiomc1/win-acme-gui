@@ -22,12 +22,19 @@ $packageVersion = if ($Version -match '^\d+\.\d+\.\d+([-.].*)?$') { $Version } e
 $zip = Join-Path $artifactRoot "WinAcmeGui-$packageVersion-win-x64.zip"
 
 if ([System.Environment]::OSVersion.Platform -ne [System.PlatformID]::Win32NT) { throw 'Portable WPF publishing must run on Windows.' }
+# Native commands ignore $ErrorActionPreference; a failed test/publish must abort the script,
+# otherwise a package can be produced from stale or partial output.
+$PSNativeCommandUseErrorActionPreference = $true
 if (Test-Path $publish) { Remove-Item $publish -Recurse -Force }
+Get-ChildItem $artifactRoot -Filter 'WinAcmeGui-*-win-x64.zip' -ErrorAction SilentlyContinue | Remove-Item -Force
 New-Item -ItemType Directory -Force -Path $publish | Out-Null
 
 dotnet test $solution --configuration Release
+if ($LASTEXITCODE -ne 0) { throw "dotnet test failed with exit code $LASTEXITCODE." }
 dotnet publish $appProject -c Release -r win-x64 --self-contained true -o $publish -p:PublishSingleFile=false -p:DebugType=None -p:Version=$packageVersion
+if ($LASTEXITCODE -ne 0) { throw "GUI publish failed with exit code $LASTEXITCODE." }
 dotnet publish $workerProject -c Release -r win-x64 --self-contained true -o (Join-Path $publish 'worker') -p:PublishSingleFile=false -p:DebugType=None -p:Version=$packageVersion
+if ($LASTEXITCODE -ne 0) { throw "Worker publish failed with exit code $LASTEXITCODE." }
 
 Copy-Item (Join-Path $root 'README.md') $publish
 Copy-Item (Join-Path $root 'docs/user-guide.pt-BR.md') $publish

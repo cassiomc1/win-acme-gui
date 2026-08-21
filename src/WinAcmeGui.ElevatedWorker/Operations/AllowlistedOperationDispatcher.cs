@@ -94,6 +94,7 @@ public sealed class AllowlistedOperationDispatcher
             }
 
             if (pendingValue is null || string.IsNullOrWhiteSpace(argument)) return false;
+            if (!IsSafeValue(argument)) return false;
             values[pendingValue] = argument;
             pendingValue = null;
         }
@@ -107,6 +108,15 @@ public sealed class AllowlistedOperationDispatcher
             _ => false
         };
     }
+
+    // Values reach wacs.exe via ProcessStartInfo.ArgumentList (no shell involved), but win-acme's
+    // own parser has historically accepted both --switch and /switch forms; a value that looks like
+    // a switch, a response-file reference (@file) or carries control characters must never be
+    // accepted, so it can never be re-interpreted as anything other than a literal value.
+    private static bool IsSafeValue(string value) =>
+        !(value[0] is '-' or '/' or '@')
+        && !value.Contains('"')
+        && !value.Any(char.IsControl);
 
     private static bool ValidateCreate(IReadOnlyDictionary<string, string> values, IReadOnlySet<string> found)
     {

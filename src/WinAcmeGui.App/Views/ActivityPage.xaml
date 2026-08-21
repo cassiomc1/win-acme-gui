@@ -37,6 +37,7 @@
                   ItemsSource="{Binding Activity}"
                   RowHeight="40"
                   IsHitTestVisible="True"
+                  AutomationProperties.Name="{Binding Culture[LogsDescription]}"
                   Visibility="{Binding HasActivity, Converter={StaticResource BoolToVisibility}}">
           <DataGrid.Columns>
             <DataGridTextColumn Header="{Binding Data.Culture[TimeColumn], Source={StaticResource PageContext}}"

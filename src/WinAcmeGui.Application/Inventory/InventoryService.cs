@@ -32,7 +32,19 @@ public sealed class InventoryService(
         return new(installation, configuration, renewals, diagnostics);
     }
 
-    private static bool PathsEqual(string left, string right) =>
-        Path.GetFullPath(left).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
-            .Equals(Path.GetFullPath(right).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar), StringComparison.OrdinalIgnoreCase);
+    private static bool PathsEqual(string left, string right)
+    {
+        // Malformed configuration paths must fail the comparison (and surface the reload
+        // diagnostic) instead of throwing raw ArgumentException out of GetFullPath.
+        if (string.IsNullOrWhiteSpace(left) || string.IsNullOrWhiteSpace(right)) return false;
+        try
+        {
+            return Path.GetFullPath(left).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                .Equals(Path.GetFullPath(right).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar), StringComparison.OrdinalIgnoreCase);
+        }
+        catch (Exception ex) when (ex is ArgumentException or IOException or NotSupportedException)
+        {
+            return false;
+        }
+    }
 }

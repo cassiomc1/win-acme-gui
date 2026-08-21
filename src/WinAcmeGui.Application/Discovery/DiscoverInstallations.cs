@@ -1,8 +1,7 @@
+using WinAcmeGui.Application.Configuration;
 using WinAcmeGui.Domain.Installations;
 
 namespace WinAcmeGui.Application.Discovery;
-
-using WinAcmeGui.Application.Configuration;
 
 public interface IInstallationCandidateSource
 {
@@ -47,7 +46,11 @@ public sealed class DiscoverInstallations(
                     candidates.TryAdd(key, path);
                 }
             }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
+            // Discovery is best-effort by design: a source that throws (Win32Exception from
+            // schtasks/process probes, SecurityException, NotSupportedException, ...) must only
+            // contribute a diagnostic, never abort the remaining sources.
+            catch (Exception ex) when (ex is not OperationCanceledException
+                and not OutOfMemoryException and not StackOverflowException)
             {
                 diagnostics.Add(new("discovery.source.failed", ex.Message));
             }
@@ -63,6 +66,7 @@ public sealed class DiscoverInstallations(
         }
 
         foreach (var collision in valid
+            .Where(x => !string.IsNullOrWhiteSpace(x.ConfigurationPath))
             .GroupBy(x => Canonicalize(x.ConfigurationPath), StringComparer.OrdinalIgnoreCase)
             .Where(x => x.Count() > 1))
         {

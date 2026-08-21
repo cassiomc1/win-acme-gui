@@ -46,4 +46,6 @@ The download action accepts only the approved official x64 path with a SHA-256 d
 
 System-changing operations go through the elevated worker using UAC, one operation at a time. The worker must exist, be signed and share the same trusted publisher as the GUI. Cancellation terminates the child process and waits for it to exit.
 
-The GUI does not decrypt protected passwords, display secrets or expose unmasked operation output. See the [troubleshooting guide](troubleshooting.en-US.md) when a diagnostic code is shown.
+The GUI↔worker channel is a named pipe hardened in three ways: the shared token is never placed on the command line (where any same-user process could read it); the GUI verifies that the connected process is exactly the worker it started before sending the request; and every worker response is authenticated with an HMAC of the shared token, so a spoofed peer cannot fake success or failure results. The elevated child runs under supervision and is killed if the connection breaks.
+
+The GUI does not decrypt protected passwords, display secrets or expose unmasked operation output. Secret-looking values are masked in previews, logs and diagnostics. See the [troubleshooting guide](troubleshooting.en-US.md) when a diagnostic code is shown.

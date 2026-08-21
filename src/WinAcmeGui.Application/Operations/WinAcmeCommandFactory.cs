@@ -7,6 +7,7 @@ public sealed class WinAcmeCommandFactory
 {
     public WinAcmeCommand CreateRenew(string executablePath, string renewalId, bool force)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(renewalId);
         var arguments = new List<SensitiveArgument>
         {
             SensitiveArgument.Plain("--renew", string.Empty),
@@ -16,14 +17,17 @@ public sealed class WinAcmeCommandFactory
         return new(executablePath, arguments);
     }
 
-    public WinAcmeCommand CreateList(string executablePath) =>
-        new(executablePath, [SensitiveArgument.Plain("--list", string.Empty)]);
+    public WinAcmeCommand CreateCancel(string executablePath, string renewalId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(renewalId);
+        return new(executablePath, [SensitiveArgument.Plain("--cancel", string.Empty), SensitiveArgument.Plain("--id", renewalId)]);
+    }
 
-    public WinAcmeCommand CreateCancel(string executablePath, string renewalId) =>
-        new(executablePath, [SensitiveArgument.Plain("--cancel", string.Empty), SensitiveArgument.Plain("--id", renewalId)]);
-
-    public WinAcmeCommand CreateRevoke(string executablePath, string renewalId) =>
-        new(executablePath, [SensitiveArgument.Plain("--revoke", string.Empty), SensitiveArgument.Plain("--id", renewalId)]);
+    public WinAcmeCommand CreateRevoke(string executablePath, string renewalId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(renewalId);
+        return new(executablePath, [SensitiveArgument.Plain("--revoke", string.Empty), SensitiveArgument.Plain("--id", renewalId)]);
+    }
 
     public WinAcmeCommand CreateCertificate(string executablePath, CertificateDraft draft, bool staging)
     {
@@ -42,6 +46,7 @@ public sealed class WinAcmeCommandFactory
         {
             SensitiveArgument.Plain("--source", draft.Source),
             SensitiveArgument.Plain("--host", string.Join(',', draft.Domains)),
+            // The selfhosting plugin serves both HTTP-01 and TLS-ALPN-01; the mode is chosen by --validationmode.
             SensitiveArgument.Plain("--validation", "selfhosting"),
             SensitiveArgument.Plain("--validationmode", validationMode),
             SensitiveArgument.Plain("--store", draft.Store),
@@ -53,7 +58,8 @@ public sealed class WinAcmeCommandFactory
             arguments.Add(SensitiveArgument.Plain("--pemfilespath", draft.StoragePath));
         if (draft.Store.Equals("pfxfile", StringComparison.OrdinalIgnoreCase))
             arguments.Add(SensitiveArgument.Plain("--pfxfilepath", draft.StoragePath));
-        if (draft.AcceptTerms) arguments.Add(SensitiveArgument.Plain("--accepttos", string.Empty));
+        // Guarded above: reaching this point implies AcceptTerms.
+        arguments.Add(SensitiveArgument.Plain("--accepttos", string.Empty));
         return new(executablePath, arguments);
     }
 

@@ -74,4 +74,17 @@ public sealed class WinAcmeProcessRunnerTests
         result.Status.Should().Be(OperationStatus.Cancelled);
         result.ErrorCode.Should().Be("operation.cancelled");
     }
+
+    [Fact]
+    public async Task Missing_executable_reports_a_distinct_notfound_code()
+    {
+        var runner = new WinAcmeProcessRunner();
+        var missing = Path.Combine(Path.GetTempPath(), "win-acme-gui-missing", "wacs.exe");
+        var command = new WinAcmeCommand(missing, [SensitiveArgument.Plain("--version", string.Empty)]);
+
+        var result = await runner.RunAsync(command, null, CancellationToken.None);
+
+        result.Status.Should().Be(OperationStatus.Failed);
+        result.ErrorCode.Should().Be("process.start.notfound");
+    }
 }

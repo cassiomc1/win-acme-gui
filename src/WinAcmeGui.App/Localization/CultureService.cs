@@ -42,17 +42,22 @@ public sealed class CultureService : INotifyPropertyChanged
     public void SetCulture(string name)
     {
         var selected = LocalizationTable.Normalize(name);
-        if (Current.Name.Equals(selected, StringComparison.OrdinalIgnoreCase) && _strings.Count > 0) return;
-        Current = CultureInfo.GetCultureInfo(selected);
-        CultureInfo.CurrentCulture = Current;
-        CultureInfo.CurrentUICulture = Current;
-        _strings = LocalizationTable.For(selected);
+        var changed = !Current.Name.Equals(selected, StringComparison.OrdinalIgnoreCase) || _strings.Count == 0;
+        if (changed)
+        {
+            Current = CultureInfo.GetCultureInfo(selected);
+            CultureInfo.CurrentCulture = Current;
+            CultureInfo.CurrentUICulture = Current;
+            _strings = LocalizationTable.For(selected);
+        }
+        // Notifications fire even when nothing changed: selector controls bind IsChecked OneWay,
+        // and a click on the already-active option must reassert their visual state.
         Raise("Item[]");
         Raise(nameof(CultureName));
         Raise(nameof(Current));
         Raise(nameof(IsPortuguese));
         Raise(nameof(IsEnglish));
-        CultureChanged?.Invoke(this, EventArgs.Empty);
+        if (changed) CultureChanged?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>Raised after the active language changed, for consumers that cache derived text.</summary>

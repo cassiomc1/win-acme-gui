@@ -56,7 +56,11 @@ public sealed partial class ShellViewModel
         get => _isDarkTheme;
         set
         {
-            if (!SetField(ref _isDarkTheme, value)) return;
+            // Always reassert the checked state: selector controls bind OneWay, and a click on an
+            // already-active option must snap their local visual state back to the real value.
+            var changed = SetField(ref _isDarkTheme, value);
+            Raise(nameof(IsDarkTheme));
+            if (!changed) return;
             Raise(nameof(ThemeName));
             ThemeChanged?.Invoke(this, value);
         }

@@ -7,6 +7,7 @@ public static partial class LocalizationTable
         new("AppTitle", "win-acme GUI", "win-acme GUI"),
         new("AppSubtitle", "CENTRAL DE ADMINISTRAÇÃO", "ADMINISTRATION CENTER"),
         new("GuiSubtitle", "CENTRAL DE ADMINISTRAÇÃO", "ADMINISTRATION CENTER"),
+        new("NavigationListName", "Navegação", "Navigation"),
         new("Status", "STATUS", "STATUS"),
         new("StatusIdle", "Pronto", "Idle"),
         new("StatusBusy", "Operação em andamento…", "Operation running…"),

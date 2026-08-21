@@ -2,24 +2,33 @@ using System.Net;
 
 namespace WinAcmeGui.Infrastructure.Downloads;
 
-internal sealed class OfficialHttpTransport
+internal sealed class OfficialHttpTransport : IDisposable
 {
     private const int MaxRedirects = 5;
     private readonly HttpClient _httpClient;
     private readonly PackageVerifier _verifier;
+    private readonly bool _ownsClient;
 
     public OfficialHttpTransport(HttpClient httpClient, PackageVerifier verifier)
     {
         _httpClient = httpClient;
         _verifier = verifier;
+        _ownsClient = false;
     }
 
     public OfficialHttpTransport(PackageVerifier verifier)
         : this(new HttpClient(new HttpClientHandler { AllowAutoRedirect = false }), verifier)
     {
+        // Only the self-constructed convenience client is owned; an injected client belongs to the caller.
+        _ownsClient = true;
     }
 
     public HttpClient Client => _httpClient;
+
+    public void Dispose()
+    {
+        if (_ownsClient) _httpClient.Dispose();
+    }
 
     public bool IsApproved(Uri uri) => _verifier.IsApproved(uri);
 

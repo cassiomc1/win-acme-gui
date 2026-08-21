@@ -24,7 +24,7 @@ public sealed class InstallationValidator(
         try { versionText = await versionProbe.GetVersionAsync(executablePath, cancellationToken); }
         catch (OperationCanceledException) { throw; }
         catch (Exception) { return null; }
-        var match = VersionPattern.Match(versionText);
+        var match = VersionPattern.Match(versionText.Trim());
         if (!match.Success) return null;
         var configPath = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(executablePath))!, "settings.json");
         AcmeEndpoint? endpoint = null;

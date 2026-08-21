@@ -46,4 +46,6 @@ O botão de download aceita somente o caminho oficial x64 com digest SHA-256. Em
 
 Operações que alteram o sistema passam pelo worker elevado via UAC, uma operação por vez. O worker deve existir, estar assinado e compartilhar o mesmo signatário confiável da GUI. O cancelamento encerra o processo filho e aguarda seu término.
 
-A GUI não descriptografa senhas protegidas, não exibe segredos e mantém a saída do win-acme mascarada quando necessário. Consulte o [guia de solução de problemas](troubleshooting.pt-BR.md) ao receber um código de diagnóstico.
+O canal GUI↔worker é um named pipe protegido em três camadas: o token compartilhado nunca aparece na linha de comando (onde qualquer processo do mesmo usuário poderia lê-lo); a GUI confirma que o processo conectado é exatamente o worker que ela iniciou antes de enviar o pedido; e toda resposta do worker é autenticada com um HMAC do token, então um peer falsificado não consegue forjar resultados de sucesso ou falha. O processo filho elevado roda supervisionado e é encerrado se a conexão cair.
+
+A GUI não descriptografa senhas protegidas, não exibe segredos e mantém a saída do win-acme mascarada quando necessário. Valores sensíveis são mascarados na prévia, nos logs e nos diagnósticos. Consulte o [guia de solução de problemas](troubleshooting.pt-BR.md) ao receber um código de diagnóstico.

@@ -36,8 +36,10 @@ public sealed class ProcessWinAcmeVersionProbe : IWinAcmeVersionProbe
             if (process.ExitCode != 0) throw new InvalidOperationException($"wacs.exe --version failed: {error.Trim()}");
             return string.IsNullOrWhiteSpace(output) ? error.Trim() : output.Trim();
         }
-        catch (OperationCanceledException)
+        catch
         {
+            // Any failure (timeout, IO error on the redirected streams) must kill the probe
+            // process before propagating - disposing the wrapper does not terminate it.
             await TerminateAsync(process);
             throw;
         }
@@ -67,28 +69,33 @@ public sealed class WinAcmeConfigurationReader(IWinAcmeVersionProbe versionProbe
     {
         _ = await versionProbe.GetVersionAsync(executablePath, cancellationToken);
         var settingsPath = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(executablePath))!, "settings.json");
-        JsonDocument? document = null;
+        // The document is parsed and consumed inside a single scoped block: if ParseAsync throws on
+        // a hostile settings.json the pooled buffers are returned deterministically.
+        string clientName;
+        string? configuredPath;
+        Uri uri;
         if (File.Exists(settingsPath))
         {
             await using var stream = File.Open(settingsPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-            document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+            using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+            var root = document.RootElement;
+            clientName = NormalizeClientName(GetString(root, "Client", "ClientName"));
+            configuredPath = GetString(root, "Client", "ConfigurationPath");
+            var endpointText = GetString(root, "ACME", "DefaultBaseUri") ?? "https://acme-v02.api.letsencrypt.org/";
+            uri = ParseHttpsEndpoint(endpointText, settingsPath);
         }
-
-        var root = document?.RootElement;
-        var clientName = NormalizeClientName(GetString(root, "Client", "ClientName"));
-        var configuredPath = GetString(root, "Client", "ConfigurationPath");
-        var uriText = GetString(root, "ACME", "DefaultBaseUri") ?? "https://acme-v02.api.letsencrypt.org/";
-        if (!Uri.TryCreate(uriText, UriKind.Absolute, out var uri))
-            throw new InvalidDataException($"Invalid ACME endpoint in {settingsPath}.");
-        if (!uri.Scheme.Equals(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
-            throw new InvalidDataException("The ACME endpoint must use HTTPS.");
+        else
+        {
+            clientName = NormalizeClientName(null);
+            configuredPath = null;
+            uri = ParseHttpsEndpoint("https://acme-v02.api.letsencrypt.org/", settingsPath);
+        }
 
         var installationDirectory = Path.GetDirectoryName(Path.GetFullPath(executablePath))!;
         var configurationPath = string.IsNullOrWhiteSpace(configuredPath)
             ? Path.GetFullPath(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), clientName, uri.Host))
             : ResolveConfigurationPath(configuredPath, installationDirectory);
 
-        document?.Dispose();
         return new(settingsPath, clientName, configurationPath, new AcmeEndpoint(uri, IsProductionEndpoint(uri)),
             new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
@@ -98,11 +105,22 @@ public sealed class WinAcmeConfigurationReader(IWinAcmeVersionProbe versionProbe
             });
     }
 
+    private static Uri ParseHttpsEndpoint(string endpointText, string settingsPath)
+    {
+        if (!Uri.TryCreate(endpointText, UriKind.Absolute, out var uri))
+            throw new InvalidDataException($"Invalid ACME endpoint in {settingsPath}.");
+        if (!uri.Scheme.Equals(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidDataException("The ACME endpoint must use HTTPS.");
+        return uri;
+    }
+
     private static string? GetString(JsonElement? root, string section, string property)
     {
         if (root is not { } value || value.ValueKind != JsonValueKind.Object || !value.TryGetProperty(section, out var sectionValue)) return null;
         if (!sectionValue.TryGetProperty(property, out var propertyValue) || propertyValue.ValueKind == JsonValueKind.Null) return null;
-        return propertyValue.ValueKind == JsonValueKind.String ? propertyValue.GetString() : propertyValue.ToString();
+        // Only genuine strings are honored: a hostile "ConfigurationPath": 123 must not have its
+        // raw JSON token text routed into path resolution.
+        return propertyValue.ValueKind == JsonValueKind.String ? propertyValue.GetString() : null;
     }
 
     private static string NormalizeClientName(string? value)
