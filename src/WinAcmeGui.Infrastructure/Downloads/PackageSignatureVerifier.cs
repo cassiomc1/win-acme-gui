@@ -26,6 +26,32 @@ public sealed class WindowsAuthenticodeSignatureVerifier(bool requireTrustedPubl
         "wouter tinus"
     ];
 
+    /// <summary>
+    /// The official win-acme releases use a project certificate whose chain is not
+    /// rooted in the Windows trust store. Its identity is still recognizable and
+    /// the Authenticode signature itself must remain cryptographically valid.
+    /// </summary>
+    public static bool IsApprovedWinAcmeIdentity(X509Certificate2 certificate)
+    {
+        var names = new[]
+        {
+            certificate.GetNameInfo(X509NameType.SimpleName, false),
+            certificate.GetNameInfo(X509NameType.EmailName, false),
+            certificate.GetNameInfo(X509NameType.DnsName, false),
+            certificate.GetNameInfo(X509NameType.UpnName, false),
+            certificate.GetNameInfo(X509NameType.UrlName, false)
+        };
+        return names.Where(x => !string.IsNullOrWhiteSpace(x))
+            .Any(name => TrustedPublisherMarkers.Any(marker => name.Trim().Equals(marker, StringComparison.OrdinalIgnoreCase)));
+    }
+
+    private static bool IsAllowedUntrustedWinAcmeCertificate(X509Certificate2 certificate) =>
+        certificate.GetNameInfo(X509NameType.EmailName, false)
+            .Equals("win.acme.simple@gmail.com", StringComparison.OrdinalIgnoreCase)
+        || certificate.Subject.Equals("CN=WACS", StringComparison.OrdinalIgnoreCase)
+            && certificate.Issuer.Equals("CN=WACS", StringComparison.OrdinalIgnoreCase)
+            && certificate.Thumbprint.Equals("9A733B700FCA BF26D73485B1384346E542558F1FAE704414433378E885A1BD33".Replace(" ", "", StringComparison.Ordinal), StringComparison.OrdinalIgnoreCase);
+
     public Task VerifyAsync(string destination, CancellationToken cancellationToken)
     {
         if (!OperatingSystem.IsWindows()) return Task.CompletedTask;
@@ -79,12 +105,14 @@ public sealed class WindowsAuthenticodeSignatureVerifier(bool requireTrustedPubl
         try
         {
             using var certificate = ReadSignerCertificate(executable);
-            var pinnedOfficialCertificate = IsPinnedOfficialCertificate(certificate);
-            if (!certificate.Verify() && !pinnedOfficialCertificate)
+            var chainIsTrusted = certificate.Verify();
+            var approvedIdentity = IsApprovedWinAcmeIdentity(certificate);
+            var allowUntrustedChain = !chainIsTrusted && IsAllowedUntrustedWinAcmeCertificate(certificate);
+            if (!chainIsTrusted && !allowUntrustedChain)
                 throw new InvalidDataException($"Authenticode chain verification failed for {executable}.");
-            if (requireTrustedPublisher && !IsTrustedPublisher(certificate))
+            if (requireTrustedPublisher && !approvedIdentity)
                 throw new InvalidDataException($"The executable publisher is not approved: {executable}.");
-            VerifyAuthenticodeSignature(executable, pinnedOfficialCertificate);
+            VerifyAuthenticodeSignature(executable, allowUntrustedChain);
         }
         catch (InvalidDataException)
         {
@@ -101,25 +129,6 @@ public sealed class WindowsAuthenticodeSignatureVerifier(bool requireTrustedPubl
         using var signed = X509Certificate.CreateFromSignedFile(executable);
         return new X509Certificate2(signed);
     }
-
-    private static bool IsTrustedPublisher(X509Certificate2 certificate)
-    {
-        var names = new[]
-        {
-            certificate.GetNameInfo(X509NameType.SimpleName, false),
-            certificate.GetNameInfo(X509NameType.EmailName, false),
-            certificate.GetNameInfo(X509NameType.DnsName, false),
-            certificate.GetNameInfo(X509NameType.UpnName, false),
-            certificate.GetNameInfo(X509NameType.UrlName, false)
-        };
-        return names.Where(x => !string.IsNullOrWhiteSpace(x))
-            .Any(name => TrustedPublisherMarkers.Any(marker => name.Trim().Equals(marker, StringComparison.OrdinalIgnoreCase)));
-    }
-
-    private static bool IsPinnedOfficialCertificate(X509Certificate2 certificate) =>
-        certificate.Subject.Equals("CN=WACS", StringComparison.OrdinalIgnoreCase)
-        && certificate.Issuer.Equals("CN=WACS", StringComparison.OrdinalIgnoreCase)
-        && certificate.Thumbprint.Equals("9A733B700FCA BF26D73485B1384346E542558F1FAE704414433378E885A1BD33".Replace(" ", "", StringComparison.Ordinal), StringComparison.OrdinalIgnoreCase);
 
     private static void VerifyAuthenticodeSignature(string executable, bool allowPinnedTrust)
     {
