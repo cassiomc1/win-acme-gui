@@ -2,6 +2,12 @@
 
 Portable Windows desktop administration center for [win-acme](https://www.win-acme.com/), built with .NET 8 and WPF.
 
+## Screenshots
+
+![Main window](screen/screenzy-1787363090012.png)
+
+![Certificate operations](screen/screenzy-1787363106870.png)
+
 ## Current scope
 
 The current shell provides:
