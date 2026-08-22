@@ -11,6 +11,12 @@ public sealed class RenewalDocumentReader : IRenewalReader
         "Manual", "IIS", "IISSite", "IISBinding", "Csr"
     };
 
+    private static readonly string[] ModernSections =
+    [
+        "TargetPluginOptions", "ValidationPluginOptions", "CsrPluginOptions",
+        "OrderPluginOptions", "StorePluginOptions", "InstallationPluginOptions"
+    ];
+
     public async Task<RenewalReadResult> ReadAsync(string path, CancellationToken cancellationToken)
     {
         try
@@ -22,12 +28,14 @@ public sealed class RenewalDocumentReader : IRenewalReader
                 throw new InvalidDataException("Renewal JSON root must be an object.");
 
             var id = GetString(root, "Id") ?? GetFallbackId(path);
-            var name = GetString(root, "Name") ?? id;
+            var name = GetString(root, "LastFriendlyName") ?? GetString(root, "Name") ?? id;
             var domains = ReadDomains(root);
             var sourcePlugin = GetNestedString(root, "Plugin", "Source", "Plugin");
             var diagnostics = new List<RenewalDiagnostic>();
             var editable = true;
-            if (!root.TryGetProperty("Id", out _) || !root.TryGetProperty("Plugin", out var plugin) || plugin.ValueKind != JsonValueKind.Object)
+            var hasModernStructure = ModernSections.Any(section => root.TryGetProperty(section, out _));
+            var hasLegacyStructure = root.TryGetProperty("Plugin", out var legacyPlugin) && legacyPlugin.ValueKind == JsonValueKind.Object;
+            if (!hasModernStructure && !hasLegacyStructure)
             {
                 diagnostics.Add(new("renewal.json.incomplete", "The renewal document does not contain the required Id and Plugin structure.", true));
                 editable = false;
@@ -116,7 +124,7 @@ public sealed class RenewalDocumentReader : IRenewalReader
             {
                 x.Index,
                 Success = GetBoolean(x.Entry, "Success"),
-                ValidTo = GetDateTime(x.Entry, "ValidTo"),
+                ValidTo = GetDateTime(x.Entry, "ValidTo") ?? GetOrderExpireDate(x.Entry),
                 Timestamp = GetDateTime(x.Entry, "Date")
                     ?? GetDateTime(x.Entry, "Created")
                     ?? GetDateTime(x.Entry, "ValidFrom")
@@ -133,6 +141,18 @@ public sealed class RenewalDocumentReader : IRenewalReader
         if (validTo is null) return RenewalStatus.Healthy;
         if (validTo <= DateTimeOffset.UtcNow) return RenewalStatus.Expired;
         return validTo <= DateTimeOffset.UtcNow.AddDays(30) ? RenewalStatus.DueSoon : RenewalStatus.Healthy;
+    }
+
+    private static DateTimeOffset? GetOrderExpireDate(JsonElement entry)
+    {
+        if (!entry.TryGetProperty("OrderResults", out var orders) || orders.ValueKind != JsonValueKind.Array) return null;
+        return orders.EnumerateArray()
+            .Select(order => GetDateTime(order, "ExpireDate"))
+            .Where(x => x is not null)
+            .Select(x => x!.Value)
+            .OrderByDescending(x => x)
+            .Cast<DateTimeOffset?>()
+            .FirstOrDefault();
     }
 
     private static JsonElement? GetNestedObject(JsonElement root, params string[] properties)
